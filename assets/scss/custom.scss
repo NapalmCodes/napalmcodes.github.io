@@ -1,0 +1,20 @@
+.article-preview {
+    font-family: var(--article-font-family);
+    font-size: var(--article-font-size);
+    line-height: var(--article-line-height);
+    color: var(--card-text-color-main);
+}
+
+.left-sidebar {
+    --sidebar-avatar-size: 160px;
+}
+
+.site-logo {
+    border: solid 3px green;
+}
+
+:root {
+    &[data-scheme="light"] {
+        --body-text-color: #000;
+    }
+}
