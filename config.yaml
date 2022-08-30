@@ -1,0 +1,163 @@
+baseUrl: https://shawn.vause.us
+languageCode: en-us
+title: Shawn Vause - Shawn Vause's Blog
+paginate: 5
+
+languages:
+  en:
+    languageName: English
+    title: Shawn Vause - Shawn Vause's Blog
+
+DefaultContentLanguage: en
+
+# Set hasCJKLanguage to true if DefaultContentLanguage is in [zh-cn ja ko]
+# This will make .Summary and .WordCount behave correctly for CJK languages.
+hasCJKLanguage: false
+
+params:
+  mainSections:
+    - posts
+  featuredImageField: image
+  rssFullContent: true
+  favicon:
+
+  dateFormat:
+    published: Jan 02, 2006
+    lastUpdated: Jan 02, 2006 15:04 EST
+
+  article:
+    preview: true
+
+  widgets:
+    homepage:
+      - type: search
+      - type: archives
+        params:
+            limit: 5
+      - type: categories
+        params:
+            limit: 10
+      - type: tag-cloud
+        params:
+            limit: 10
+
+  sidebar:
+    subtitle: test
+    avatar:
+      enabled: true
+      local: true
+      src: img/profile.jpg
+
+  opengraph:
+    twitter:
+      # Your Twitter username
+      site: SuperVause
+
+      # Available values: summary, summary_large_image
+      card: summary_large_image
+
+  defaultImage:
+    opengraph:
+      enabled: false
+      local: false
+      src:
+
+  colorScheme:
+    # Display toggle
+    toggle: true
+
+    # Available values: auto, light, dark
+    default: auto
+
+  imageProcessing:
+    cover:
+      enabled: true
+    content:
+      enabled: true
+
+### Custom menu
+### See https://docs.stack.jimmycai.com/configuration/custom-menu.html
+### To remove about, archive and search page menu item, remove `menu` field from their FrontMatter
+menu:
+  main:
+    - identifier: home
+      name: Home
+      url: /
+      weight: -100
+      params:
+        icon: home
+        newTab: false
+    - identifier: about
+      name: About
+      url: /
+      weight: -90
+      params:
+        icon: user
+        newTab: false
+
+  social:
+    - identifier: github
+      name: GitHub
+      url: https://github.com/napalm684
+      params:
+        icon: brand-github
+
+    - identifier: linkedin
+      name: linkedin
+      url: https://www.linkedin.com/in/shawn-vause/
+      params:
+        icon: brand-linkedin
+
+    - identifier: twitter
+      name: Twitter
+      url: https://twitter.com/SuperVause
+      params:
+        icon: brand-twitter
+
+    - identifier: facebook
+      name: Facebook
+      url: https://www.facebook.com/vause
+      params:
+        icon: brand-facebook
+
+    - identifier: instagram
+      name: Instagram
+      url: https://www.instagram.com/napalm684
+      params:
+        icon: brand-instagram
+
+related:
+  includeNewer: true
+  threshold: 60
+  toLower: false
+  indices:
+    - name: tags
+      weight: 100
+
+    - name: categories
+      weight: 200
+
+markup:
+  goldmark:
+    renderer:
+      ## Set to true if you have HTML content inside Markdown
+      unsafe: true
+  tableOfContents:
+    endLevel: 4
+    ordered: true
+    startLevel: 2
+  highlight:
+    noClasses: false
+    codeFences: true
+    guessSyntax: true
+    lineNoStart: 1
+    lineNos: true
+    lineNumbersInTable: true
+    tabWidth: 4
+
+module:
+  # uncomment line below for temporary local development of module
+  # replacements: "github.com/CaiJimmy/hugo-theme-stack/v3 -> ../../hugo-theme-stack"
+  imports:
+    - path: github.com/napalm684/hugo-theme-stack/v3
+      disable: false
