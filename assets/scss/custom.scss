@@ -3,6 +3,20 @@
     font-size: var(--article-font-size);
     line-height: var(--article-line-height);
     color: var(--card-text-color-main);
+
+    & p {
+        margin-bottom: 0;
+        
+        &> a {
+            display: block;
+            padding-top: 2rem;
+            text-align: right;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
 }
 
 .left-sidebar {
