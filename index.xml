@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Shawn Vause - Shawn Vause's Blog</title><link>https://shawn.vause.us/</link><description>Recent content on Shawn Vause - Shawn Vause's Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 14 Mar 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://shawn.vause.us/index.xml" rel="self" type="application/rss+xml"/><item><title>JSii for Polyglot Shops Writing AWS CDK Constructs</title><link>https://shawn.vause.us/posts/jsii-for-cdk/</link><pubDate>Mon, 14 Mar 2022 00:00:00 +0000</pubDate><guid>https://shawn.vause.us/posts/jsii-for-cdk/</guid><description>&lt;p>As a programmer today, it is likely you will find yourself working in a polyglot, or multiple language environment. We have finally gotten to the place where the merits of different programming technologies can coexist peacefully together. We all know developers are an opinionated breed of individuals. I certainly find a comfort level with specific technology stacks over others. That is completely ok by the way, don&amp;rsquo;t let anyone tell you that your preferred stack is somehow any worse than a different one! You may find strengths/weaknesses across programming languages for different use cases, however having valid evidence to support those claims is way better than simply stating an opinion as fact. Regardless, what is often not okay, is rebuilding functionality in a given language with similar or identical requirements when it doesn&amp;rsquo;t make a measurable difference to do so. After all, we are not providing business value to our customers (at least directly) which is often our primary objective. Someone could argue certainly that it provides developer benefit, maybe it even makes us more efficient as developers, but often with tight deadlines and difficult objectives to hit, we have to make tradeoffs in the work that the team is able to accomplish for a given project, sprint, etc. This brings us to the topic of today&amp;rsquo;s post. My development shop has started adopting the &lt;a href="https://aws.amazon.com/cdk/" title="AWS CDK">AWS CDK&lt;/a> as our primary Infrastructure as Code (IaC) solution for greenfield development. I am personally all for this as domain specific languages like HCL for Terraform can feel clunky and cumbersome to utilize with a mindset geared towards for-loops, if conditionals, functions and all the other &amp;ldquo;goodies&amp;rdquo; we find in traditional programming languages. In addition, we get strong bundling and dependency management capabilities that help the CDK apps we write feel like any other app we are used to coding!
+### end preview ###
+&lt;/p>
+&lt;p>There are efficiencies to gain here, as we can now build custom reusable constructs (think libraries) in the CDK to spin up common infrastructure patterns quickly and easily! We can use a custom construct to do the &amp;ldquo;heavy-lifting&amp;rdquo; which allows us to focus on writing business logic and delivering value! We can build packages codifying business requirements for our infrastructure like: common tagging models, use of specific custom domains, security best practices and so much more! Thus, we increase our velocity and deliver more for our customers. However, as previously alluded to, not everyone loves a given programming language. On the web side at our company we currently do a lot of .NET development and our embedded group might gravitate towards something like Python. Again, different strokes for different folks. Differences in opinion are ok, but if we want to achieve economies of scale and get the maximum amount of reuse from these custom constructs, we need a way to meet both groups in the middle. Enter &lt;a href="https://aws.github.io/jsii/" title="JSii">JSii&lt;/a>, a fantastic offering from AWS that enables developers to write constructs one time using TypeScript to support all the programming languages CDK targets today. So with one code base we can support C#, Python, Go, Java, JavaScript and of course TypeScript. This embraces our polyglot environment and ensures we are using our time efficiently. Everyone walks away happy able to use their favorite programming language. So how does it work?&lt;/p>
+&lt;p>JSii sounds complicated on the surface, after all generating code into multiple languages is certainly not an easy problem to solve, but with the great tooling built by the AWS team we can largely be &amp;ldquo;ignorant&amp;rdquo; to those implementation details provided you adhere to using TypeScript as the base language and follow a few &lt;a href="https://aws.github.io/jsii/user-guides/lib-author/typescript-restrictions/" title="JSii TypeScript Restrictions">rules&lt;/a> for the TypeScript being written. Let&amp;rsquo;s walk through a simple example construct to spin up everyone&amp;rsquo;s favorite demo infrastructure an S3 bucket. Note you should have the CDK installed on your shell to begin, instructions can be found &lt;a href="https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html#getting_started_install" title="CDK Installation">here&lt;/a>. Start by creating a new CDK construct project inside a directory named &lt;em>&amp;ldquo;MyAwesomeBucket&amp;rdquo;&lt;/em> using the following command:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">cdk init lib --language&lt;span class="o">=&lt;/span>typescript
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>This will create a new CDK construct project with a construct name and an associated properties interface matching the directory name. Inside the &lt;em>MyAwesomeBucket/lib&lt;/em> directory you will find &lt;em>index.ts&lt;/em>. This is your starter class inheriting from the standard CDK Construct class. Here we can define our custom construct and any configuration properties it might need. Replace the &lt;em>MyAwesomeBucket&lt;/em> class definition with the following code and remove the &lt;em>MyAwesomeBucketProps&lt;/em> interface as it won&amp;rsquo;t be needed for this exercise:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-csharp" data-lang="csharp">&lt;span class="line">&lt;span class="cl">&lt;span class="n">export&lt;/span> &lt;span class="k">class&lt;/span> &lt;span class="nc">MyAwesomeBucket&lt;/span> &lt;span class="n">extends&lt;/span> &lt;span class="n">Construct&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">constructor&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">scope&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">Construct&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">id&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kt">string&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">super&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">scope&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">id&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">new&lt;/span> &lt;span class="n">s3&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Bucket&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">scope&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="err">&amp;#39;&lt;/span>&lt;span class="n">MyAwesomeBucket&lt;/span>&lt;span class="err">&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">encryption&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">s3&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">BucketEncryption&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">S3_MANAGED&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">enforceSSL&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="k">true&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Here we have a simple construct that creates an S3 bucket with encryption and a bucket policy that will enforce SSL. These are great best practices that maybe we would want to enforce in our infrastructure across the company. With JSii we can take this code and publish it in a language specific registry for our desired targets. The entire organization can now use it, getting all those best practices for &amp;ldquo;free&amp;rdquo;. There are only two properties and one resource in this example, but this tiny construct shows the power a larger construct can have in speeding up development and codifying best practices throughout the organization. After all, we can simply new up an instance of this class in our CDK infrastructure stack (after installing the dependency) to create in this case a bucket with encryption and SSL protection already enabled!&lt;/p>
+&lt;p>So with that established, how do we generate constructs using the JSii tooling for all these language targets? First we should install JSii dependencies into our &lt;em>package.json&lt;/em>. Run the following command in your solution:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">npm install jsii jsii-pacmak -D
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>This command installs the two tools we need for this simple walkthrough. JSii will provide the TypeScript compiler for our construct and jsii-pacmak will provide the tooling to generate language-specific packages from our construct code. Speaking of which, JSii will generate your &lt;em>tsconfig.json&lt;/em> file for you, so go ahead and delete that file. The next step requires us to make some updates to our &lt;em>package.json&lt;/em>. First replace the &lt;em>script&lt;/em> block with the following JSii specific commands:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-json" data-lang="json">&lt;span class="line">&lt;span class="cl">&lt;span class="s2">&amp;#34;scripts&amp;#34;&lt;/span>&lt;span class="err">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;build&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;jsii -vvv&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;watch&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;jsii -w&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;package&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;jsii-pacmak -vvv&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>In addition, we must add an &lt;em>author&lt;/em> object property with &lt;em>name&lt;/em> and &lt;em>email&lt;/em> specified, the &lt;em>repository&lt;/em> object property with the &lt;em>url&lt;/em> set to the git repository location, a valid &lt;em>license&lt;/em> property, a &lt;em>description&lt;/em> and a &lt;em>homepage&lt;/em> are also recommended suggestions. While these items seem trivial, the JSii tooling is very particular about how the &lt;em>package.json&lt;/em> file looks. Finally, we must add a &lt;em>jsii&lt;/em> object property similar to the following:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-json" data-lang="json">&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;jsii&amp;#34;&lt;/span>&lt;span class="err">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;outdir&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;dist&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;targets&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;python&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;distName&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;MyAwesomeBucket&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;module&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;MyAwesomeBucket&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;dotnet&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;namespace&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;MyAwesomeBucketNS&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;packageId&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;MyAwesomeBucket&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>This property tells the JSii tooling where to place the compiled (ready-to-publish) packages and what language targets you want to support. To keep things concise, we will use just Python and .NET. Simply specify your naming configuration for each target and JSii will handle the rest! Now we should be able to run the following command and verify there are no errors (note the &lt;em>watch&lt;/em> command is handy to use during development as it watches for changes and runs the build on save, enhancing the feedback loop while working on the code):&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">npm run build
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Assuming there were no errors we are finally ready to build the packages. As you can probably guess running the &lt;em>package&lt;/em> command will do the deed. However, you may find yourself on a development machine without specific versions of tooling for your configured targets. No worries, JSii has you covered with this Docker image &lt;a href="https://hub.docker.com/r/jsii/superchain" title="jsii/superchain">jsii/superchain&lt;/a>! Choose the image version tag that fits your needs and mount a volume or clone your repository inside the docker image. A command like this one should help get you there if you choose to mount a volume:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">docker run -it --rm --entrypoint sh -v /dev/temp/MyAwesomeBucket:/MyAwesomeBucket jsii/superchain:latest
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Inside the container, change your directory into the &lt;em>MyAwesomeBucket&lt;/em> folder, run your dependency installation if necessary and finally run the following:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">npm run build &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> npm run package
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Assuming everything is successful your JSii outdir (&lt;em>dist&lt;/em> if you followed the snippet above) will now have a folder for each target with artifacts ready for publishing to npm, PyPi and Nuget with standard publishing tools!
+&lt;br/>&lt;br/>
+&lt;img src="package-output.png" alt="JSII Package Output" style="display: block; margin: 0 auto" />&lt;/p>
+&lt;p>So I know what you are likely thinking, this is great but what is the catch? There are always tradeoffs in these situations where we sacrifice something for the flexibility and benefits a tool like JSii offers. Well honestly the only thing I have found to date are performance implications. As this &lt;a href="https://aws.amazon.com/blogs/opensource/generate-python-java-dotnet-software-libraries-from-typescript-source/" title="JSii AWS Blog Post">post&lt;/a> details, the &amp;ldquo;magic&amp;rdquo; behind JSii is that native language calls proxy JavaScript code to an embedded JavaScript VM, enabling the write once, run everywhere benefits we love. Obviously, this has implications and might rule it out for some performance sensitive use cases. If you read further in the post there are some benchmark comparisons for you to examine. I would argue for my company&amp;rsquo;s needs, we are simply running this infrastructure code in CICD to spin up/update AWS architecture. If it takes a little longer to do so, that is not a deal breaker. After all, it is not like this infrastructure code is hosting web traffic that needs to happen quickly and at scale!&lt;/p>
+&lt;p>In closing, JSii brings a ton of value to the table and can satisfy everyone by meeting them at the level of the tools and languages they use daily. Languages are likely to be added over time and with AWS backing/supporting the JSii ecosystem, you can relax in knowing it will be maintained for years to come. I personally am hoping to see an inner-sourcing initiative take off at my company with everyone contributing, consuming and using these packages to ultimately move faster and drive business value.&lt;/p></description></item><item><title>Getting Python to AWS Lambda From Non-Linux Environments</title><link>https://shawn.vause.us/posts/python-local-to-lambda/</link><pubDate>Fri, 03 Dec 2021 00:00:00 +0000</pubDate><guid>https://shawn.vause.us/posts/python-local-to-lambda/</guid><description>&lt;p>AWS Lambda supports a variety of ways to get code and dependencies up and running in the cloud. You can use &lt;a href="https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html" title="AWS Lambda Layers" target="_blank">Lambda layers&lt;/a>, &lt;a href="https://docs.aws.amazon.com/lambda/latest/dg/runtimes-custom.html" title="AWS Lambda Custom Runtimes" target="_blank">custom runtimes&lt;/a> or for ultimate control just specify a full &lt;a href="https://docs.aws.amazon.com/lambda/latest/dg/runtimes-images.html" title="AWS Lambda Container Support" target="_blank">container&lt;/a> definition and push that up to ECR/Docker Hub for use by the Lambda platform. However, as flexible as Lambda is, there are two approaches that stand above the rest as &amp;ldquo;drop-dead simple&amp;rdquo;. You can write your code in the browser with the built in editor, but let&amp;rsquo;s be honest that isn&amp;rsquo;t the best development experience, or you can zip your assets up locally and push them to the cloud. This is of course provided that your assets/dependencies are less than the &lt;a href="https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html" title="AWS Lambda Zip Size" target="_blank">50MB&lt;/a> cap at the time of writing this post. The remaining content of this post will focus on the zip deployment approach and problems you can run into when working on a Mac/Windows environment which most professional developers are likely to spend the bulk of their time in.
+### end preview ###
+&lt;/p>
+&lt;p>Python being the target function language for our routine has some design considerations to orient ourselves with when we do a ​pip install​ of package dependencies locally. Typically, a pip package will be compiled on the platform it is installed on by the python wheel. As a result, you can run into problems where MacOS does things differently than Windows or Linux during that compilation. For example, MacOS handles encryption differently than Windows and differently than Linux being a FreeBSD based operating system. The compiled dependency will likely be incompatible with the Linux OS running in the Lambda platform. Any zip file we push up to the cloud must have the dependencies compiled for the host Linux context!&lt;/p>
+&lt;p>So how do we solve the previously described problem? Enter the &lt;a href="https://github.com/lambci/docker-lambda" title="lambci/docker-lambda Repository" target="_blank">lambci&lt;/a> collection of docker images which includes the ​&lt;a href="https://github.com/lambci/docker-lambda/blob/master/python3.8/build/Dockerfile" title="lambci Python 3.8 Build Dockerfile" target="_blank">lambci/lambda:build-python3.8&lt;/a> for python version 3.8. This image includes all the necessary build tooling for installing python dependencies with pip. The goal of the lambci project is to produce a docker image that is as close to the AWS host environment for a Lambda function as possible. This is a great way to test your function code locally while iterating quickly during development. Using the build image previously mentioned, we are able to build our zip file within docker for uploading to AWS and share it out locally via a docker volume. Here is a handy script you can use in bash for creating your python code archive:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">&lt;span class="cp">#!/bin/sh
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="cp">&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Execute from your python3.8 code directory&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Copy contents to temp directory&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">cp -r ./ ./temp &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> &lt;span class="nb">cd&lt;/span> ./temp
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Run the lambci container with a volume in the personal working directory. Then execute the commands&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># in the container to do a local pip install. Finally, zip contents from the /var/task path in the container.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">docker run -v &lt;span class="s2">&amp;#34;&lt;/span>&lt;span class="nv">$PWD&lt;/span>&lt;span class="s2">&amp;#34;&lt;/span>:/var/task lambci/lambda:build-python3.8 &lt;span class="nb">cd&lt;/span> /var/task &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> &lt;span class="se">\
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="se">&lt;/span>pip install --target ./packages -r requirements.txt &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> &lt;span class="se">\
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="se">&lt;/span>zip -r mycode.zip ./ -x &lt;span class="s2">&amp;#34;packages/*&amp;#34;&lt;/span> &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> &lt;span class="se">\ &lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">cd&lt;/span> packages/ &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> &lt;span class="se">\
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="se">&lt;/span>zip -ur ../mycode.zip ./
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The comments explain what is going on, but it is important to mention that when we create the zip file we initially exclude the packages directory created by the targeted pip install​. We then add the installed packages to the root of the zip avoiding folder nesting that will prevent the dependencies from being recognized by the Lambda runtime. Take a look at this &lt;a href="https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-awscli.html" title="Using Lambda with the AWS CLI" target="_blank">documentation&lt;/a> to upload your zip into AWS Lambda via the AWS CLI! If all goes according to plan you will be running your function with properly detected dependencies!&lt;/p></description></item><item><title>Think Outside the Stack With Pulumi</title><link>https://shawn.vause.us/posts/think-outside-stack-pulumi/</link><pubDate>Mon, 27 Sep 2021 00:00:00 +0000</pubDate><guid>https://shawn.vause.us/posts/think-outside-stack-pulumi/</guid><description>&lt;p>&lt;a href="https://www.pulumi.com/" title="Pulumi" target="_blank">Pulumi&lt;/a> is a powerful infrastructure as code (IaC) tool with a fantastic superpower you just don&amp;rsquo;t get with products like &lt;a href="https://www.terraform.io/" title="Terraform" target="_blank">HashiCorp&amp;rsquo;s Terraform&lt;/a>. You can harness the power of your favorite programming &lt;a href="https://www.pulumi.com/docs/intro/languages/" title="Pulumi Languages" target="_blank">languages&lt;/a> and apply them for another purpose. Rather than learning a domain specific language (DSL) that is largely a &amp;ldquo;one-trick pony&amp;rdquo; you can make your favorite programming language build cloud infrastructure! How cool is that? HashiCorp Configuration Language (&lt;a href="https://www.terraform.io/docs/language/syntax/configuration.html" title="HCL Syntax" target="_blank">HCL&lt;/a>), while powerful, is frankly used for one thing and one thing only, infrastructure. It can do the job well, there is no argument we have gotten our mileage out of this tool and tools like it (I am looking at you AWS Cloudformation). However, it immediately starts to break down as you get more sophisticated. Looping, conditionals, etc. while supported have largely been bolted on as customers started to hit the edges of this tool chain. Which begged the important and maybe obvious question, &amp;ldquo;Why are we forcing ourselves to use a language not designed for this level of sophistication, when we have world class languages that would certainly be up to the task?&amp;rdquo; As a result, I would argue another wave of IaC tools was kicked off with players like AWS launching their Cloud Development Kit (CDK), Pulumi launching a cross-cloud/cross-service SDK and even HashiCorp recognized the need to grow past HCL. I will leave the reader to investigate the merits of each toolchain, as this was not the intent of this post. Today I want to introduce the Pulumi stack concept and the flexibility it can provide in building our cloud infrastructure.
+### end preview ###
+&lt;/p>
+&lt;p>Let&amp;rsquo;s start by setting the stage. Pulumi is organized per their &lt;a href="https://www.pulumi.com/docs/intro/concepts/" title="Pulumi Architecture" target="_blank">documentation&lt;/a> as follows:
+&lt;br/>&lt;br/>
+&lt;img src="pulumi-arch.png" alt="Pulumi Architecture" style="display: block; margin: 0 auto" />&lt;/p>
+&lt;p>Based on this diagram we see that a project is essentially a collection of program(s) that create resources producing inputs and outputs. What is not immediately clear and is an issue I have with this diagram are the stacks. While a project certainly contains programs, resources and stacks, it isn&amp;rsquo;t apparent that stacks are essentially an isolated &amp;ldquo;snapshot&amp;rdquo; of a program&amp;rsquo;s execution and the resources it produced. They map very well to system environment contexts (as shown with dev, qa and prod callouts). In other words, stacks, put simply, define the state of our infrastructure for that &amp;ldquo;snapshot&amp;rdquo; under an identifier like the environment name.&lt;/p>
+&lt;p>With the aforementioned said, another point of friction is with the documentation around &lt;a href="https://www.pulumi.com/docs/intro/concepts/project/" title="Pulumi Projects" target="_blank">projects&lt;/a>. The documentation seems to overload the &amp;ldquo;project&amp;rdquo; label as it is represented on this diagram. It seems to refer to &amp;ldquo;projects&amp;rdquo; not only as a collection of programs, but also as a program itself. They clarify this further by explaining that any directory containing the ​Pulumi.yml file is considered a &amp;ldquo;project&amp;rdquo;. This unfortunately introduces some confusion for the reader. When you look at the UI in the Pulumi state management solution you would expect the root element of the Pulumi hierarchy to be the name codified in the yaml file. However it is not, there is a higher root level concept that maps to your repository (for example in GitHub). For sake of discussion, we will refer to this GitHub project as a &amp;ldquo;group&amp;rdquo; since it appears to organize Pulumi projects (programs) with their stacks. This results in my opinion of what the mental model should actually look like for Pulumi (for the sake of clarity program details which remain unchanged were left off this new diagram version):
+&lt;br/>&lt;br/>
+&lt;img src="pulumi-actual.png" alt="Pulumi Actual Architecture" style="display: block; margin: 0 auto; length: 600px; width: 500px" />&lt;/p>
+&lt;p>Clearing up these confusion points results in a better understanding when talking about project boundaries. When examining these boundaries, you might make the assumption that these boxes are isolated contexts and thus each project deploys independently from each other. While possibly true, this isn&amp;rsquo;t a hard and fast requirement. Imagine a situation where you have static assets that don&amp;rsquo;t change often. Perhaps you have an S3 bucket that stores image files for a website. The bucket might get used in multiple places (multiple websites) and thus lends itself to grouping under a shared infrastructure project. This grouping not only organizes resources by intent, but it can also help us prevent accidental destruction of these assets. If they were stored with more ephemeral resources, like servers that have a higher tendency of being torn down and spun up fresh, then there is inherently more risk that something could go wrong or would be destroyed unintentionally. In addition, splitting these projects up and sharing outputs from the stacks gives us incredible flexibility to segregate our resources by purpose, enabling us to adhere to single responsibility principals we know and love. The Pulumi documentation acknowledges that newcomers are likely to start with a monolithic stack (i.e.: everything in one project deploying via a single stack). While this works fine in some situations, the real power of these abstractions comes from the interplay across project boundaries and stacks. You can also reduce execution time by controlling which projects you run ​pulumi up​ on during a given deployment.&lt;/p>
+&lt;p>Let&amp;rsquo;s walk through an example. This is a simple two project stack utilizing DigitalOcean Droplets (servers, think EC2) and DigitalOcean Spaces (object storage, think S3). In our first stack, we have a simple DigitalOcean Spaces bucket. In our second stack, we have a simple server hosting a blog application that allows users to post content. This content as you would likely suspect includes images that we want to store in our spaces bucket. DigitalOcean Spaces gives us a free CDN on top of their object storage solution, so it sounds like a good way to keep that load off our server and force the browser to pull that content from the bucket. I will be using C# to illustrate this example, however it is important to mention the APIs are very similar across languages:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-csharp" data-lang="csharp">&lt;span class="line">&lt;span class="cl">&lt;span class="k">public&lt;/span> &lt;span class="k">class&lt;/span> &lt;span class="nc">SharedStack&lt;/span> &lt;span class="p">:&lt;/span> &lt;span class="n">Stack&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na"> [Output]&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">public&lt;/span> &lt;span class="n">Output&lt;/span> &lt;span class="n">BucketName&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="k">get&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="k">set&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na"> [Output]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">public&lt;/span> &lt;span class="n">Output&lt;/span> &lt;span class="n">CdnEndpoint&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="k">get&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="k">set&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">public&lt;/span> &lt;span class="n">SharedStack&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">bucket&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="k">new&lt;/span> &lt;span class="n">Pulumi&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">DigitalOcean&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">SpacesBucket&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;my-bucket&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">new&lt;/span> &lt;span class="n">Pulumi&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">DigitalOcean&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">SpacesBucketArgs&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Region&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="s">&amp;#34;nyc3&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Acl&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="s">&amp;#34;private&amp;#34;&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">​&lt;/span> &lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">cdn&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="k">new&lt;/span> &lt;span class="n">Pulumi&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">DigitalOcean&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Cdn&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;my-cdn&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">new&lt;/span> &lt;span class="n">Pulumi&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">DigitalOcean&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">CdnArgs&lt;/span>&lt;span class="err">​&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Origin&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">bucket&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">BucketDomainName&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">});&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Outputs​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">BucketName&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">bucket&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Name&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">CdnEndpoint&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">cdn&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Endpoint&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="err">​​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>We can then import the outputs using a StackReference in our server stack!&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-csharp" data-lang="csharp">&lt;span class="line">&lt;span class="cl">&lt;span class="k">public&lt;/span> &lt;span class="k">class&lt;/span> &lt;span class="nc">BlogStack&lt;/span> &lt;span class="p">:&lt;/span> &lt;span class="n">Stack&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">​&lt;/span> &lt;span class="k">public&lt;/span> &lt;span class="n">BlogStack&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">sharedStack&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="k">new&lt;/span> &lt;span class="n">Pulumi&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">StackReference&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;organization/project/environment&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">bucketName&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">sharedStack&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">RequireOutput&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;BucketName&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">cdnEndpoint&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">sharedStack&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">RequireOutput&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;CdnEndpoint&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">userData&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">Output&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">All&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">bucketName&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">cdnEndpoint&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">.&lt;/span>&lt;span class="n">Apply&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">t&lt;/span> &lt;span class="p">=&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">userData&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="s">&amp;#34;#!/bin/bash&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Set environment variables&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">userData&lt;/span> &lt;span class="p">+=&lt;/span> &lt;span class="s">$&amp;#34;\necho \&amp;#34;&lt;/span>&lt;span class="n">Bucket&lt;/span>&lt;span class="p">=&lt;/span>&lt;span class="err">\\\&lt;/span>&lt;span class="s">&amp;#34;{t[0]}\\\&amp;#34;\&amp;#34; | sudo tee -a /etc/environment&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">userData&lt;/span> &lt;span class="p">+=&lt;/span> &lt;span class="s">$&amp;#34;\necho \&amp;#34;&lt;/span>&lt;span class="n">CDN&lt;/span>&lt;span class="p">=&lt;/span>&lt;span class="err">\\\&lt;/span>&lt;span class="s">&amp;#34;https://{t[1]}/\\\&amp;#34;\&amp;#34; | sudo tee -a /etc/environment&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">Output&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">CreateSecret&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">userData&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">webServer&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="k">new&lt;/span> &lt;span class="n">Pulumi&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">DigitalOcean&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Droplet&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;my-server&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">new&lt;/span> &lt;span class="n">Pulumi&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">DigitalOcean&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">DropletArgs&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Image&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="s">&amp;#34;docker-20-04&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Size&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="s">&amp;#34;s-1vcpu-1gb&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">VpcUuid&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">vpcId&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">PrivateNetworking&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="k">true&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Region&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="s">&amp;#34;nyc3&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">SshKeys&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="n">sshKeyId&lt;/span> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">UserData&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">userData&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>There is a ton of power here and we are only stratching the surface. The big takeaways are that you shouldn&amp;rsquo;t be afraid of embracing multiple projects and stacks. Each stack is deployed via pulumi up independently, allowing you to focus on deploying only the infrastructure needed at a given time, reducing risk. It also enables a shared stack of resources you can use throughout your cloud solutions.&lt;/p></description></item><item><title>Welcome Back!</title><link>https://shawn.vause.us/posts/welcome/</link><pubDate>Thu, 09 Sep 2021 00:00:00 +0000</pubDate><guid>https://shawn.vause.us/posts/welcome/</guid><description>&lt;p>You may have noticed the blog went down recently. I have been working on a new design and re-launch that took a touch longer than anticipated. Thank you for returning. I am hoping to have a more robust solution available to write/publish content more easily now.
+### end preview ###
+&lt;/p>
+&lt;p>I intend to use this space to document things I have learned in my technical journeys and personal reading. Occasionally something non-technical might slip in, as I have used the pandemic to pursue new hobbies like fishing. While I may not be the most avid blogger, I think it will be a great reference for stuff I need to refer to periodically and my hope is that it will provide value to others as well. Thanks again for returning and I look forward to writing more content/iterating on this platform. Please bear with me for any bugs/defects that might arise as this is definitely a v1.0 platform at the moment. Welcome back and cheers!
+&lt;br/>&lt;br/>
+&lt;img src="cheers.jpg" alt="Cheers" style="display: block; margin: 0 auto" />&lt;/p></description></item><item><title>Archives</title><link>https://shawn.vause.us/page/archives/</link><pubDate>Tue, 28 May 2019 00:00:00 +0000</pubDate><guid>https://shawn.vause.us/page/archives/</guid><description/></item><item><title>Search</title><link>https://shawn.vause.us/page/search/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://shawn.vause.us/page/search/</guid><description/></item></channel></rss>

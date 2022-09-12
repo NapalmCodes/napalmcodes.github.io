@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>aws on Shawn Vause - Shawn Vause's Blog</title><link>https://shawn.vause.us/tags/aws/</link><description>Recent content in aws on Shawn Vause - Shawn Vause's Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 14 Mar 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://shawn.vause.us/tags/aws/index.xml" rel="self" type="application/rss+xml"/><item><title>JSii for Polyglot Shops Writing AWS CDK Constructs</title><link>https://shawn.vause.us/posts/jsii-for-cdk/</link><pubDate>Mon, 14 Mar 2022 00:00:00 +0000</pubDate><guid>https://shawn.vause.us/posts/jsii-for-cdk/</guid><description>&lt;p>As a programmer today, it is likely you will find yourself working in a polyglot, or multiple language environment. We have finally gotten to the place where the merits of different programming technologies can coexist peacefully together. We all know developers are an opinionated breed of individuals. I certainly find a comfort level with specific technology stacks over others. That is completely ok by the way, don&amp;rsquo;t let anyone tell you that your preferred stack is somehow any worse than a different one! You may find strengths/weaknesses across programming languages for different use cases, however having valid evidence to support those claims is way better than simply stating an opinion as fact. Regardless, what is often not okay, is rebuilding functionality in a given language with similar or identical requirements when it doesn&amp;rsquo;t make a measurable difference to do so. After all, we are not providing business value to our customers (at least directly) which is often our primary objective. Someone could argue certainly that it provides developer benefit, maybe it even makes us more efficient as developers, but often with tight deadlines and difficult objectives to hit, we have to make tradeoffs in the work that the team is able to accomplish for a given project, sprint, etc. This brings us to the topic of today&amp;rsquo;s post. My development shop has started adopting the &lt;a href="https://aws.amazon.com/cdk/" title="AWS CDK">AWS CDK&lt;/a> as our primary Infrastructure as Code (IaC) solution for greenfield development. I am personally all for this as domain specific languages like HCL for Terraform can feel clunky and cumbersome to utilize with a mindset geared towards for-loops, if conditionals, functions and all the other &amp;ldquo;goodies&amp;rdquo; we find in traditional programming languages. In addition, we get strong bundling and dependency management capabilities that help the CDK apps we write feel like any other app we are used to coding!
+### end preview ###
+&lt;/p>
+&lt;p>There are efficiencies to gain here, as we can now build custom reusable constructs (think libraries) in the CDK to spin up common infrastructure patterns quickly and easily! We can use a custom construct to do the &amp;ldquo;heavy-lifting&amp;rdquo; which allows us to focus on writing business logic and delivering value! We can build packages codifying business requirements for our infrastructure like: common tagging models, use of specific custom domains, security best practices and so much more! Thus, we increase our velocity and deliver more for our customers. However, as previously alluded to, not everyone loves a given programming language. On the web side at our company we currently do a lot of .NET development and our embedded group might gravitate towards something like Python. Again, different strokes for different folks. Differences in opinion are ok, but if we want to achieve economies of scale and get the maximum amount of reuse from these custom constructs, we need a way to meet both groups in the middle. Enter &lt;a href="https://aws.github.io/jsii/" title="JSii">JSii&lt;/a>, a fantastic offering from AWS that enables developers to write constructs one time using TypeScript to support all the programming languages CDK targets today. So with one code base we can support C#, Python, Go, Java, JavaScript and of course TypeScript. This embraces our polyglot environment and ensures we are using our time efficiently. Everyone walks away happy able to use their favorite programming language. So how does it work?&lt;/p>
+&lt;p>JSii sounds complicated on the surface, after all generating code into multiple languages is certainly not an easy problem to solve, but with the great tooling built by the AWS team we can largely be &amp;ldquo;ignorant&amp;rdquo; to those implementation details provided you adhere to using TypeScript as the base language and follow a few &lt;a href="https://aws.github.io/jsii/user-guides/lib-author/typescript-restrictions/" title="JSii TypeScript Restrictions">rules&lt;/a> for the TypeScript being written. Let&amp;rsquo;s walk through a simple example construct to spin up everyone&amp;rsquo;s favorite demo infrastructure an S3 bucket. Note you should have the CDK installed on your shell to begin, instructions can be found &lt;a href="https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html#getting_started_install" title="CDK Installation">here&lt;/a>. Start by creating a new CDK construct project inside a directory named &lt;em>&amp;ldquo;MyAwesomeBucket&amp;rdquo;&lt;/em> using the following command:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">cdk init lib --language&lt;span class="o">=&lt;/span>typescript
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>This will create a new CDK construct project with a construct name and an associated properties interface matching the directory name. Inside the &lt;em>MyAwesomeBucket/lib&lt;/em> directory you will find &lt;em>index.ts&lt;/em>. This is your starter class inheriting from the standard CDK Construct class. Here we can define our custom construct and any configuration properties it might need. Replace the &lt;em>MyAwesomeBucket&lt;/em> class definition with the following code and remove the &lt;em>MyAwesomeBucketProps&lt;/em> interface as it won&amp;rsquo;t be needed for this exercise:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-csharp" data-lang="csharp">&lt;span class="line">&lt;span class="cl">&lt;span class="n">export&lt;/span> &lt;span class="k">class&lt;/span> &lt;span class="nc">MyAwesomeBucket&lt;/span> &lt;span class="n">extends&lt;/span> &lt;span class="n">Construct&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">constructor&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">scope&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">Construct&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">id&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="kt">string&lt;/span>&lt;span class="p">)&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">super&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">scope&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">id&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">new&lt;/span> &lt;span class="n">s3&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Bucket&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">scope&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="err">&amp;#39;&lt;/span>&lt;span class="n">MyAwesomeBucket&lt;/span>&lt;span class="err">&amp;#39;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">encryption&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">s3&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">BucketEncryption&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">S3_MANAGED&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">enforceSSL&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="k">true&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Here we have a simple construct that creates an S3 bucket with encryption and a bucket policy that will enforce SSL. These are great best practices that maybe we would want to enforce in our infrastructure across the company. With JSii we can take this code and publish it in a language specific registry for our desired targets. The entire organization can now use it, getting all those best practices for &amp;ldquo;free&amp;rdquo;. There are only two properties and one resource in this example, but this tiny construct shows the power a larger construct can have in speeding up development and codifying best practices throughout the organization. After all, we can simply new up an instance of this class in our CDK infrastructure stack (after installing the dependency) to create in this case a bucket with encryption and SSL protection already enabled!&lt;/p>
+&lt;p>So with that established, how do we generate constructs using the JSii tooling for all these language targets? First we should install JSii dependencies into our &lt;em>package.json&lt;/em>. Run the following command in your solution:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">npm install jsii jsii-pacmak -D
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>This command installs the two tools we need for this simple walkthrough. JSii will provide the TypeScript compiler for our construct and jsii-pacmak will provide the tooling to generate language-specific packages from our construct code. Speaking of which, JSii will generate your &lt;em>tsconfig.json&lt;/em> file for you, so go ahead and delete that file. The next step requires us to make some updates to our &lt;em>package.json&lt;/em>. First replace the &lt;em>script&lt;/em> block with the following JSii specific commands:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-json" data-lang="json">&lt;span class="line">&lt;span class="cl">&lt;span class="s2">&amp;#34;scripts&amp;#34;&lt;/span>&lt;span class="err">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;build&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;jsii -vvv&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;watch&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;jsii -w&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;package&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;jsii-pacmak -vvv&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>In addition, we must add an &lt;em>author&lt;/em> object property with &lt;em>name&lt;/em> and &lt;em>email&lt;/em> specified, the &lt;em>repository&lt;/em> object property with the &lt;em>url&lt;/em> set to the git repository location, a valid &lt;em>license&lt;/em> property, a &lt;em>description&lt;/em> and a &lt;em>homepage&lt;/em> are also recommended suggestions. While these items seem trivial, the JSii tooling is very particular about how the &lt;em>package.json&lt;/em> file looks. Finally, we must add a &lt;em>jsii&lt;/em> object property similar to the following:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-json" data-lang="json">&lt;span class="line">&lt;span class="cl"> &lt;span class="s2">&amp;#34;jsii&amp;#34;&lt;/span>&lt;span class="err">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;outdir&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;dist&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;targets&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;python&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;distName&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;MyAwesomeBucket&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;module&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;MyAwesomeBucket&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;dotnet&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;namespace&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;MyAwesomeBucketNS&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;packageId&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;MyAwesomeBucket&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>This property tells the JSii tooling where to place the compiled (ready-to-publish) packages and what language targets you want to support. To keep things concise, we will use just Python and .NET. Simply specify your naming configuration for each target and JSii will handle the rest! Now we should be able to run the following command and verify there are no errors (note the &lt;em>watch&lt;/em> command is handy to use during development as it watches for changes and runs the build on save, enhancing the feedback loop while working on the code):&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">npm run build
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Assuming there were no errors we are finally ready to build the packages. As you can probably guess running the &lt;em>package&lt;/em> command will do the deed. However, you may find yourself on a development machine without specific versions of tooling for your configured targets. No worries, JSii has you covered with this Docker image &lt;a href="https://hub.docker.com/r/jsii/superchain" title="jsii/superchain">jsii/superchain&lt;/a>! Choose the image version tag that fits your needs and mount a volume or clone your repository inside the docker image. A command like this one should help get you there if you choose to mount a volume:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">docker run -it --rm --entrypoint sh -v /dev/temp/MyAwesomeBucket:/MyAwesomeBucket jsii/superchain:latest
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Inside the container, change your directory into the &lt;em>MyAwesomeBucket&lt;/em> folder, run your dependency installation if necessary and finally run the following:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">npm run build &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> npm run package
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>Assuming everything is successful your JSii outdir (&lt;em>dist&lt;/em> if you followed the snippet above) will now have a folder for each target with artifacts ready for publishing to npm, PyPi and Nuget with standard publishing tools!
+&lt;br/>&lt;br/>
+&lt;img src="package-output.png" alt="JSII Package Output" style="display: block; margin: 0 auto" />&lt;/p>
+&lt;p>So I know what you are likely thinking, this is great but what is the catch? There are always tradeoffs in these situations where we sacrifice something for the flexibility and benefits a tool like JSii offers. Well honestly the only thing I have found to date are performance implications. As this &lt;a href="https://aws.amazon.com/blogs/opensource/generate-python-java-dotnet-software-libraries-from-typescript-source/" title="JSii AWS Blog Post">post&lt;/a> details, the &amp;ldquo;magic&amp;rdquo; behind JSii is that native language calls proxy JavaScript code to an embedded JavaScript VM, enabling the write once, run everywhere benefits we love. Obviously, this has implications and might rule it out for some performance sensitive use cases. If you read further in the post there are some benchmark comparisons for you to examine. I would argue for my company&amp;rsquo;s needs, we are simply running this infrastructure code in CICD to spin up/update AWS architecture. If it takes a little longer to do so, that is not a deal breaker. After all, it is not like this infrastructure code is hosting web traffic that needs to happen quickly and at scale!&lt;/p>
+&lt;p>In closing, JSii brings a ton of value to the table and can satisfy everyone by meeting them at the level of the tools and languages they use daily. Languages are likely to be added over time and with AWS backing/supporting the JSii ecosystem, you can relax in knowing it will be maintained for years to come. I personally am hoping to see an inner-sourcing initiative take off at my company with everyone contributing, consuming and using these packages to ultimately move faster and drive business value.&lt;/p></description></item><item><title>Getting Python to AWS Lambda From Non-Linux Environments</title><link>https://shawn.vause.us/posts/python-local-to-lambda/</link><pubDate>Fri, 03 Dec 2021 00:00:00 +0000</pubDate><guid>https://shawn.vause.us/posts/python-local-to-lambda/</guid><description>&lt;p>AWS Lambda supports a variety of ways to get code and dependencies up and running in the cloud. You can use &lt;a href="https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html" title="AWS Lambda Layers" target="_blank">Lambda layers&lt;/a>, &lt;a href="https://docs.aws.amazon.com/lambda/latest/dg/runtimes-custom.html" title="AWS Lambda Custom Runtimes" target="_blank">custom runtimes&lt;/a> or for ultimate control just specify a full &lt;a href="https://docs.aws.amazon.com/lambda/latest/dg/runtimes-images.html" title="AWS Lambda Container Support" target="_blank">container&lt;/a> definition and push that up to ECR/Docker Hub for use by the Lambda platform. However, as flexible as Lambda is, there are two approaches that stand above the rest as &amp;ldquo;drop-dead simple&amp;rdquo;. You can write your code in the browser with the built in editor, but let&amp;rsquo;s be honest that isn&amp;rsquo;t the best development experience, or you can zip your assets up locally and push them to the cloud. This is of course provided that your assets/dependencies are less than the &lt;a href="https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html" title="AWS Lambda Zip Size" target="_blank">50MB&lt;/a> cap at the time of writing this post. The remaining content of this post will focus on the zip deployment approach and problems you can run into when working on a Mac/Windows environment which most professional developers are likely to spend the bulk of their time in.
+### end preview ###
+&lt;/p>
+&lt;p>Python being the target function language for our routine has some design considerations to orient ourselves with when we do a ​pip install​ of package dependencies locally. Typically, a pip package will be compiled on the platform it is installed on by the python wheel. As a result, you can run into problems where MacOS does things differently than Windows or Linux during that compilation. For example, MacOS handles encryption differently than Windows and differently than Linux being a FreeBSD based operating system. The compiled dependency will likely be incompatible with the Linux OS running in the Lambda platform. Any zip file we push up to the cloud must have the dependencies compiled for the host Linux context!&lt;/p>
+&lt;p>So how do we solve the previously described problem? Enter the &lt;a href="https://github.com/lambci/docker-lambda" title="lambci/docker-lambda Repository" target="_blank">lambci&lt;/a> collection of docker images which includes the ​&lt;a href="https://github.com/lambci/docker-lambda/blob/master/python3.8/build/Dockerfile" title="lambci Python 3.8 Build Dockerfile" target="_blank">lambci/lambda:build-python3.8&lt;/a> for python version 3.8. This image includes all the necessary build tooling for installing python dependencies with pip. The goal of the lambci project is to produce a docker image that is as close to the AWS host environment for a Lambda function as possible. This is a great way to test your function code locally while iterating quickly during development. Using the build image previously mentioned, we are able to build our zip file within docker for uploading to AWS and share it out locally via a docker volume. Here is a handy script you can use in bash for creating your python code archive:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">&lt;span class="cp">#!/bin/sh
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="cp">&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Execute from your python3.8 code directory&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Copy contents to temp directory&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">cp -r ./ ./temp &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> &lt;span class="nb">cd&lt;/span> ./temp
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Run the lambci container with a volume in the personal working directory. Then execute the commands&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># in the container to do a local pip install. Finally, zip contents from the /var/task path in the container.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">docker run -v &lt;span class="s2">&amp;#34;&lt;/span>&lt;span class="nv">$PWD&lt;/span>&lt;span class="s2">&amp;#34;&lt;/span>:/var/task lambci/lambda:build-python3.8 &lt;span class="nb">cd&lt;/span> /var/task &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> &lt;span class="se">\
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="se">&lt;/span>pip install --target ./packages -r requirements.txt &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> &lt;span class="se">\
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="se">&lt;/span>zip -r mycode.zip ./ -x &lt;span class="s2">&amp;#34;packages/*&amp;#34;&lt;/span> &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> &lt;span class="se">\ &lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="nb">cd&lt;/span> packages/ &lt;span class="o">&amp;amp;&amp;amp;&lt;/span> &lt;span class="se">\
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="se">&lt;/span>zip -ur ../mycode.zip ./
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>The comments explain what is going on, but it is important to mention that when we create the zip file we initially exclude the packages directory created by the targeted pip install​. We then add the installed packages to the root of the zip avoiding folder nesting that will prevent the dependencies from being recognized by the Lambda runtime. Take a look at this &lt;a href="https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-awscli.html" title="Using Lambda with the AWS CLI" target="_blank">documentation&lt;/a> to upload your zip into AWS Lambda via the AWS CLI! If all goes according to plan you will be running your function with properly detected dependencies!&lt;/p></description></item></channel></rss>

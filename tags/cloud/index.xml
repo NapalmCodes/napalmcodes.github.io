@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>cloud on Shawn Vause - Shawn Vause's Blog</title><link>https://shawn.vause.us/tags/cloud/</link><description>Recent content in cloud on Shawn Vause - Shawn Vause's Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Mon, 27 Sep 2021 00:00:00 +0000</lastBuildDate><atom:link href="https://shawn.vause.us/tags/cloud/index.xml" rel="self" type="application/rss+xml"/><item><title>Think Outside the Stack With Pulumi</title><link>https://shawn.vause.us/posts/think-outside-stack-pulumi/</link><pubDate>Mon, 27 Sep 2021 00:00:00 +0000</pubDate><guid>https://shawn.vause.us/posts/think-outside-stack-pulumi/</guid><description>&lt;p>&lt;a href="https://www.pulumi.com/" title="Pulumi" target="_blank">Pulumi&lt;/a> is a powerful infrastructure as code (IaC) tool with a fantastic superpower you just don&amp;rsquo;t get with products like &lt;a href="https://www.terraform.io/" title="Terraform" target="_blank">HashiCorp&amp;rsquo;s Terraform&lt;/a>. You can harness the power of your favorite programming &lt;a href="https://www.pulumi.com/docs/intro/languages/" title="Pulumi Languages" target="_blank">languages&lt;/a> and apply them for another purpose. Rather than learning a domain specific language (DSL) that is largely a &amp;ldquo;one-trick pony&amp;rdquo; you can make your favorite programming language build cloud infrastructure! How cool is that? HashiCorp Configuration Language (&lt;a href="https://www.terraform.io/docs/language/syntax/configuration.html" title="HCL Syntax" target="_blank">HCL&lt;/a>), while powerful, is frankly used for one thing and one thing only, infrastructure. It can do the job well, there is no argument we have gotten our mileage out of this tool and tools like it (I am looking at you AWS Cloudformation). However, it immediately starts to break down as you get more sophisticated. Looping, conditionals, etc. while supported have largely been bolted on as customers started to hit the edges of this tool chain. Which begged the important and maybe obvious question, &amp;ldquo;Why are we forcing ourselves to use a language not designed for this level of sophistication, when we have world class languages that would certainly be up to the task?&amp;rdquo; As a result, I would argue another wave of IaC tools was kicked off with players like AWS launching their Cloud Development Kit (CDK), Pulumi launching a cross-cloud/cross-service SDK and even HashiCorp recognized the need to grow past HCL. I will leave the reader to investigate the merits of each toolchain, as this was not the intent of this post. Today I want to introduce the Pulumi stack concept and the flexibility it can provide in building our cloud infrastructure.
+### end preview ###
+&lt;/p>
+&lt;p>Let&amp;rsquo;s start by setting the stage. Pulumi is organized per their &lt;a href="https://www.pulumi.com/docs/intro/concepts/" title="Pulumi Architecture" target="_blank">documentation&lt;/a> as follows:
+&lt;br/>&lt;br/>
+&lt;img src="pulumi-arch.png" alt="Pulumi Architecture" style="display: block; margin: 0 auto" />&lt;/p>
+&lt;p>Based on this diagram we see that a project is essentially a collection of program(s) that create resources producing inputs and outputs. What is not immediately clear and is an issue I have with this diagram are the stacks. While a project certainly contains programs, resources and stacks, it isn&amp;rsquo;t apparent that stacks are essentially an isolated &amp;ldquo;snapshot&amp;rdquo; of a program&amp;rsquo;s execution and the resources it produced. They map very well to system environment contexts (as shown with dev, qa and prod callouts). In other words, stacks, put simply, define the state of our infrastructure for that &amp;ldquo;snapshot&amp;rdquo; under an identifier like the environment name.&lt;/p>
+&lt;p>With the aforementioned said, another point of friction is with the documentation around &lt;a href="https://www.pulumi.com/docs/intro/concepts/project/" title="Pulumi Projects" target="_blank">projects&lt;/a>. The documentation seems to overload the &amp;ldquo;project&amp;rdquo; label as it is represented on this diagram. It seems to refer to &amp;ldquo;projects&amp;rdquo; not only as a collection of programs, but also as a program itself. They clarify this further by explaining that any directory containing the ​Pulumi.yml file is considered a &amp;ldquo;project&amp;rdquo;. This unfortunately introduces some confusion for the reader. When you look at the UI in the Pulumi state management solution you would expect the root element of the Pulumi hierarchy to be the name codified in the yaml file. However it is not, there is a higher root level concept that maps to your repository (for example in GitHub). For sake of discussion, we will refer to this GitHub project as a &amp;ldquo;group&amp;rdquo; since it appears to organize Pulumi projects (programs) with their stacks. This results in my opinion of what the mental model should actually look like for Pulumi (for the sake of clarity program details which remain unchanged were left off this new diagram version):
+&lt;br/>&lt;br/>
+&lt;img src="pulumi-actual.png" alt="Pulumi Actual Architecture" style="display: block; margin: 0 auto; length: 600px; width: 500px" />&lt;/p>
+&lt;p>Clearing up these confusion points results in a better understanding when talking about project boundaries. When examining these boundaries, you might make the assumption that these boxes are isolated contexts and thus each project deploys independently from each other. While possibly true, this isn&amp;rsquo;t a hard and fast requirement. Imagine a situation where you have static assets that don&amp;rsquo;t change often. Perhaps you have an S3 bucket that stores image files for a website. The bucket might get used in multiple places (multiple websites) and thus lends itself to grouping under a shared infrastructure project. This grouping not only organizes resources by intent, but it can also help us prevent accidental destruction of these assets. If they were stored with more ephemeral resources, like servers that have a higher tendency of being torn down and spun up fresh, then there is inherently more risk that something could go wrong or would be destroyed unintentionally. In addition, splitting these projects up and sharing outputs from the stacks gives us incredible flexibility to segregate our resources by purpose, enabling us to adhere to single responsibility principals we know and love. The Pulumi documentation acknowledges that newcomers are likely to start with a monolithic stack (i.e.: everything in one project deploying via a single stack). While this works fine in some situations, the real power of these abstractions comes from the interplay across project boundaries and stacks. You can also reduce execution time by controlling which projects you run ​pulumi up​ on during a given deployment.&lt;/p>
+&lt;p>Let&amp;rsquo;s walk through an example. This is a simple two project stack utilizing DigitalOcean Droplets (servers, think EC2) and DigitalOcean Spaces (object storage, think S3). In our first stack, we have a simple DigitalOcean Spaces bucket. In our second stack, we have a simple server hosting a blog application that allows users to post content. This content as you would likely suspect includes images that we want to store in our spaces bucket. DigitalOcean Spaces gives us a free CDN on top of their object storage solution, so it sounds like a good way to keep that load off our server and force the browser to pull that content from the bucket. I will be using C# to illustrate this example, however it is important to mention the APIs are very similar across languages:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-csharp" data-lang="csharp">&lt;span class="line">&lt;span class="cl">&lt;span class="k">public&lt;/span> &lt;span class="k">class&lt;/span> &lt;span class="nc">SharedStack&lt;/span> &lt;span class="p">:&lt;/span> &lt;span class="n">Stack&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na"> [Output]&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">public&lt;/span> &lt;span class="n">Output&lt;/span> &lt;span class="n">BucketName&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="k">get&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="k">set&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="na"> [Output]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">public&lt;/span> &lt;span class="n">Output&lt;/span> &lt;span class="n">CdnEndpoint&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="k">get&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="k">set&lt;/span>&lt;span class="p">;&lt;/span> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">public&lt;/span> &lt;span class="n">SharedStack&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">bucket&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="k">new&lt;/span> &lt;span class="n">Pulumi&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">DigitalOcean&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">SpacesBucket&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;my-bucket&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">new&lt;/span> &lt;span class="n">Pulumi&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">DigitalOcean&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">SpacesBucketArgs&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Region&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="s">&amp;#34;nyc3&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Acl&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="s">&amp;#34;private&amp;#34;&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">​&lt;/span> &lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">cdn&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="k">new&lt;/span> &lt;span class="n">Pulumi&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">DigitalOcean&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Cdn&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;my-cdn&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">new&lt;/span> &lt;span class="n">Pulumi&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">DigitalOcean&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">CdnArgs&lt;/span>&lt;span class="err">​&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Origin&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">bucket&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">BucketDomainName&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">});&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Outputs​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">BucketName&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">bucket&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Name&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">CdnEndpoint&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">cdn&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Endpoint&lt;/span>&lt;span class="p">;&lt;/span>&lt;span class="err">​​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>We can then import the outputs using a StackReference in our server stack!&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-csharp" data-lang="csharp">&lt;span class="line">&lt;span class="cl">&lt;span class="k">public&lt;/span> &lt;span class="k">class&lt;/span> &lt;span class="nc">BlogStack&lt;/span> &lt;span class="p">:&lt;/span> &lt;span class="n">Stack&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="err">​&lt;/span> &lt;span class="k">public&lt;/span> &lt;span class="n">BlogStack&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">sharedStack&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="k">new&lt;/span> &lt;span class="n">Pulumi&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">StackReference&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;organization/project/environment&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">bucketName&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">sharedStack&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">RequireOutput&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;BucketName&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">cdnEndpoint&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">sharedStack&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">RequireOutput&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;CdnEndpoint&amp;#34;&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">userData&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">Output&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">All&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">bucketName&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">cdnEndpoint&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">.&lt;/span>&lt;span class="n">Apply&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">t&lt;/span> &lt;span class="p">=&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">userData&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="s">&amp;#34;#!/bin/bash&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Set environment variables&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">userData&lt;/span> &lt;span class="p">+=&lt;/span> &lt;span class="s">$&amp;#34;\necho \&amp;#34;&lt;/span>&lt;span class="n">Bucket&lt;/span>&lt;span class="p">=&lt;/span>&lt;span class="err">\\\&lt;/span>&lt;span class="s">&amp;#34;{t[0]}\\\&amp;#34;\&amp;#34; | sudo tee -a /etc/environment&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">userData&lt;/span> &lt;span class="p">+=&lt;/span> &lt;span class="s">$&amp;#34;\necho \&amp;#34;&lt;/span>&lt;span class="n">CDN&lt;/span>&lt;span class="p">=&lt;/span>&lt;span class="err">\\\&lt;/span>&lt;span class="s">&amp;#34;https://{t[1]}/\\\&amp;#34;\&amp;#34; | sudo tee -a /etc/environment&amp;#34;&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">Output&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">CreateSecret&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">userData&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">webServer&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="k">new&lt;/span> &lt;span class="n">Pulumi&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">DigitalOcean&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Droplet&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;my-server&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">new&lt;/span> &lt;span class="n">Pulumi&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">DigitalOcean&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">DropletArgs&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Image&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="s">&amp;#34;docker-20-04&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Size&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="s">&amp;#34;s-1vcpu-1gb&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">VpcUuid&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">vpcId&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">PrivateNetworking&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="k">true&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">Region&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="s">&amp;#34;nyc3&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">SshKeys&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="p">{&lt;/span> &lt;span class="n">sshKeyId&lt;/span> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">UserData&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">userData&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>&lt;span class="err">​&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>There is a ton of power here and we are only stratching the surface. The big takeaways are that you shouldn&amp;rsquo;t be afraid of embracing multiple projects and stacks. Each stack is deployed via pulumi up independently, allowing you to focus on deploying only the infrastructure needed at a given time, reducing risk. It also enables a shared stack of resources you can use throughout your cloud solutions.&lt;/p></description></item></channel></rss>
