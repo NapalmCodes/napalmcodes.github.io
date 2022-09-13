@@ -27,6 +27,16 @@
     --sidebar-avatar-size: 160px;
 }
 
+.sidebar header {
+    & .site-name {
+        font-size: 2.1rem;
+    }
+
+    & .site-description {
+        font-size: 1.5rem;
+    }
+}
+
 .site-logo {
     border: solid 3px #041E42;
 }
