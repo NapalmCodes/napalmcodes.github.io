@@ -104,7 +104,7 @@ menu:
         newTab: false
     - identifier: about
       name: About
-      url: /
+      url: /page/about
       weight: -90
       params:
         icon: user
