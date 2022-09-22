@@ -2,6 +2,9 @@
 author = "Shawn Vause"
 title = "Welcome Back!"
 date = "2021-09-09"
+summary = """
+You may have noticed the blog went down recently. I have been working on a new design and re-launch that took a touch longer than anticipated. Thank you for returning. I am hoping to have a more robust solution available to write/publish content more easily now. \
+I intend to use this space to document things I have learned in my technical journeys and personal reading. Occasionally something non-technical might slip in, as I have used the pandemic to pursue new hobbies like fishing."""
 tags = [
     "miscellaneous"
 ]

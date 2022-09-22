@@ -2,6 +2,9 @@
 author = "Shawn Vause"
 title = "Getting Python to AWS Lambda From Non-Linux Environments"
 date = "2021-12-03"
+summary = """
+Python dependencies are often platform specific and require compilation in the environments they will run within. AWS Lambda is not an easy environment to replicate locally. \
+Using Docker we can install AWS Lambda platform compatible python dependencies on macOS and Windows. This allows developers to upload to the cloud from our local machines, thereby keeping feedback loops concise."""
 tags = [
     "aws",
     "lambda",

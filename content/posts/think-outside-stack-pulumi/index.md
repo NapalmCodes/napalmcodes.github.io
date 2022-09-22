@@ -2,6 +2,10 @@
 author = "Shawn Vause"
 title = "Think Outside the Stack With Pulumi"
 date = "2021-09-27"
+summary = """
+Pulumi is an Infrastructure as Code (IaC) solution with fantastic superpowers tools like Terraform and Cloudformation do not provide. Using our favorite programming languages \
+over domain specific languages (DSLs) offers benefits for the cloud developer familiar with traditional programming languages and tools. Cross stack infrastructure resources in Pulumi programs offers even \
+more flexibility. Using a simple example for the DigitalOcean platform, we will illustrate the benefits the Pulumi paradigm can offer."""
 tags = [
     "infrastructure-as-code",
     "digital-ocean",

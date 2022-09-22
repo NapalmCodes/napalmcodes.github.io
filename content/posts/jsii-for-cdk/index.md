@@ -2,6 +2,9 @@
 author = "Shawn Vause"
 title = "JSii for Polyglot Shops Writing AWS CDK Constructs"
 date = "2022-03-14"
+summary = """
+JSii and related tooling enables polyglot software development shops to write AWS CDK constructs using preferred programming languages. This flexibility keeps developers happy and enables re-use of constructs across departments \
+with different development tooling preferences."""
 tags = [
     "aws",
     "cdk"

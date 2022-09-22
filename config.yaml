@@ -1,14 +1,3 @@
-## TODO:
-# - Certifications
-# - Read More Link
-# - About page
-# - Change image and border color
-# - Enable disqus
-# - Twitter open graph
-# - Facebook share thing (see Vent)
-# - Meta tag fixes
-# - Copyright notice weird
-
 baseUrl: https://shawn.vause.us
 languageCode: en-us
 title: Shawn Vause - Shawn Vause's Blog
@@ -21,6 +10,11 @@ languages:
 
 DefaultContentLanguage: en
 
+disqusShortname: shawn-vause
+
+# GA Tracking ID
+googleAnalytics:
+
 # Set hasCJKLanguage to true if DefaultContentLanguage is in [zh-cn ja ko]
 # This will make .Summary and .WordCount behave correctly for CJK languages.
 hasCJKLanguage: false
@@ -31,6 +25,10 @@ params:
   featuredImageField: image
   rssFullContent: true
   favicon:
+
+  header:
+    author: Shawn Vause
+    description: Shawn Vause blogs about software engineering, the cloud and all things programming!
 
   footer:
     copyrightText: Shawn Vause
@@ -87,6 +85,10 @@ params:
       enabled: true
     content:
       enabled: true
+
+  comments:
+    enabled: true
+    provider: disqus
 
 ### Custom menu
 ### See https://docs.stack.jimmycai.com/configuration/custom-menu.html

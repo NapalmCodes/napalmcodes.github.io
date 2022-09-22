@@ -12,3 +12,17 @@ github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220911191623-7fac3c89086c h1:n
 github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220911191623-7fac3c89086c/go.mod h1:+L/QrYcY5MkKbVmA65uNaydUIJIu8TeqND6HRBg1OqU=
 github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220913001214-2a6c8eeec010 h1:Iib9+ikcRpmelRppXjV8IcK4Bb0s++bD1AfgQzWs8r8=
 github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220913001214-2a6c8eeec010/go.mod h1:+L/QrYcY5MkKbVmA65uNaydUIJIu8TeqND6HRBg1OqU=
+github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220921225719-51db3bca8f09 h1:O+AhI93ShtSCNSt7l9Hbfv8TGsaa8ur5nPaDIBkntQY=
+github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220921225719-51db3bca8f09/go.mod h1:+L/QrYcY5MkKbVmA65uNaydUIJIu8TeqND6HRBg1OqU=
+github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220921232526-47ba92e9c794 h1:E3BfmftnRREXVbsIPJOT5mr+5ZzYIKz53mNEEbtAi4I=
+github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220921232526-47ba92e9c794/go.mod h1:+L/QrYcY5MkKbVmA65uNaydUIJIu8TeqND6HRBg1OqU=
+github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220921232659-8f8da83a5770 h1:M8niyIMSBY+QiOB+V7/NhfzRtOm1ZVy54j+rzlSh3l4=
+github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220921232659-8f8da83a5770/go.mod h1:+L/QrYcY5MkKbVmA65uNaydUIJIu8TeqND6HRBg1OqU=
+github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220921233741-0507e4dbfaa5 h1:Tdj31Qv9+9lj5hrXyZKy4bVfSVJVF2RUUv2Ue/tM9p4=
+github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220921233741-0507e4dbfaa5/go.mod h1:+L/QrYcY5MkKbVmA65uNaydUIJIu8TeqND6HRBg1OqU=
+github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220921233848-a0ab82c895b3 h1:lAi6jcbRD6nWvXJllzoL6TkocdaXI7GKUvIM2sNI6RM=
+github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220921233848-a0ab82c895b3/go.mod h1:+L/QrYcY5MkKbVmA65uNaydUIJIu8TeqND6HRBg1OqU=
+github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220921234534-8bcccae990b6 h1:bcVU+ZD/0NpE81bzeFRQ8PCOx7WZn3QGG6/qTAY5j+w=
+github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220921234534-8bcccae990b6/go.mod h1:+L/QrYcY5MkKbVmA65uNaydUIJIu8TeqND6HRBg1OqU=
+github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220921234739-38109857c779 h1:Q9SWe5SpCUBrXdZmmBB3RTB2QRRe6priRAzPTFzvu50=
+github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20220921234739-38109857c779/go.mod h1:+L/QrYcY5MkKbVmA65uNaydUIJIu8TeqND6HRBg1OqU=
