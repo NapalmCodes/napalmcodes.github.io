@@ -1,7 +1,9 @@
 <script>
     document.onreadystatechange = function() {
         if(document.readyState == "complete") {
-            document.getElementById("recommendations-error").remove();
+            var recErr = document.getElementById("recommendations-error");
+            if(recErr)
+                recErr.remove();
         }
     }
 </script>
