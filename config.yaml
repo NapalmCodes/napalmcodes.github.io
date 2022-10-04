@@ -8,6 +8,8 @@ languages:
     languageName: English
     title: Shawn Vause - Shawn Vause's Blog
 
+enableEmoji: true
+
 DefaultContentLanguage: en
 
 disqusShortname: shawn-vause
