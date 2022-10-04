@@ -1,7 +1,7 @@
 +++
 author = "Shawn Vause"
 title = ".NET MAUI iOS Free Provisioning"
-date = "2022-09-11"
+date = "2022-10-04"
 tags = [
     "dotnet",
     "maui",
@@ -10,7 +10,6 @@ tags = [
 ]
 summary = """
 Contrary to popular belief, it is possible to run an iOS application on your iPhone/iPad without paying the $99 USD fee per year to Apple for a developer program account. Through a process called free provisioning we can gain this freedom. It is a relatively simple task to accomplish and only involves some clicking around Xcode. There is no jailbreaking involved and it is supported by Apple. It does have some limitations that we will get into, but for those learning mobile development in Apple's walled garden of a platform, it is a great way to get started without the added expense."""
-draft = true
 +++
 
 Contrary to popular belief, it is possible to run an iOS application on your iPhone/iPad without paying the $99 USD fee per year to Apple for a developer program account. Through a process called free provisioning we can gain this freedom. It is a relatively simple task to accomplish and only involves some clicking around Xcode. There is no jailbreaking involved and it is supported by Apple. It does have some limitations that we will get into, but for those learning mobile development in Apple's walled garden of a platform, it is a great way to get started without the added expense.
@@ -35,7 +34,7 @@ Begin by opening Xcode on your Mac and navigating via the menu bar to *Xcode > P
 Close the dialog and proceed to create a new *App* project. Make sure to note your exact bundle identifier (in my case *com.maui.FreeProv*) and choose the team "*Your Name (Personal Team)*" created when you added your Apple ID to Xcode.<br/>
 
 <img src="xcode-new-proj.jpg" alt="Xcode New Project" style="display: block; margin: 0 auto; length: 700px; width: 600px" /><br/>
-Once Xcode is done doing its thing, plug your iOS device into the Mac and unlock your phone so you can confirm you trust the mac to access your device, example below:<br/>
+Once Xcode is done doing its thing, plug your iOS device into the Mac and unlock your phone so you can confirm you trust the mac to access your device, example below:
 
 <img src="confirmation-iphone.jpg" alt="iPhone Trust Dialog" style="display: block; margin: 0 auto; length: 500px; width: 400px" />
 
@@ -45,7 +44,7 @@ Back in Xcode, at the top of your App project's window, you will find a bread cr
 
 <img src="xcode-choose-device.jpg" alt="Xcode debug target dropdown" style="display: block; margin: 0 auto; length: 800px; width: 900px" />
 
-Next we have to configure the project settings to get our bundle identity signed. To do this click on the left side of the Xcode window in the project navigator on the top level node, in my case the *FreeProv* project. This will open the project properties tab. Verify the bundle identifier from earlier (remember I had you note this value) it must be exactly the same as the value you saw when creating the project. This is an important time to call out the profile we create is only for this identifier. When we setup some configuration in Visual Studio it will have to match this value exactly yet again. Set a *Display Name* while we are working in this section as well. Another value to note is the *Minimum Deployments* setting. This value must match or be lower than the iOS version running on the device you are using.<br/>
+Next we have to configure the project settings to get our bundle identity signed. To do this click on the left side of the Xcode window in the project navigator on the top level node, in my case the *FreeProv* project. This will open the project properties tab. Verify the bundle identifier from earlier (remember I had you note this value) it must be exactly the same as the value you saw when creating the project. This is an important time to call out the profile we create is only for this identifier. When we setup some configuration in Visual Studio it will have to match this value exactly yet again. Set the *Display Name* while we are working in this section. Another value to note is the *Minimum Deployments* setting. This value must match or be lower than the iOS version running on the device you are using.<br/>
 
 <img src="xcode-project-settings-general.jpg" alt="Xcode General Project Settings" style="display: block; margin: 0 auto; length: 700px; width: 600px" />
 
@@ -61,4 +60,18 @@ At this point you can optionally deploy the sample application from Xcode to you
 
 ### Visual Studio Steps
 
-Leave your iOS device connected to the Mac. Connect to your Mac from Visual Studio. Instructions can be found [here](https://learn.microsoft.com/en-us/dotnet/maui/ios/pair-to-mac) if needed. On your new MAUI project (I did the .NET MAUI Blazor App for fun) navigate to your project properties in the solution explorer. Scroll down to the iOS settings block on the left hand side and click *Bundle Signing*. Here you need to ...TODO
+Leave your iOS device connected to the Mac. Connect to your Mac from Visual Studio. Instructions can be found [here](https://learn.microsoft.com/en-us/dotnet/maui/ios/pair-to-mac) if needed. On your new MAUI project (I did the .NET MAUI Blazor App for fun) navigate to your project properties in the solution explorer. Scroll down to the iOS settings block on the left hand side and click *Bundle Signing*. Here you need to ensure the scheme is set to *Manual Provisioning* and signing identity is *Developer (Automatic)*.<br/>
+
+<img src="vs-bundle-signing.jpg" alt="Visual Studio Project Settings (Bundle Signing iOS)" style="display: block; margin: 0 auto;" />
+
+Finally, open up the Info.plist file via your solution explorer and ensure the *Bundle Identifier* is set to the exact value I had you note before. This effectively links the VS project to the profile created on the connected Mac.<br/>
+
+<img src="vs-info-plist.jpg" alt="Info.plist" style="display: block; margin: 0 auto;" />
+
+With a little luck, you should be able to choose your device from the *iOS Remote Device* menu of the Visual Studio run tool. This will compile the iOS app and ship it to your device for launch.
+
+<img src="vs-running-app.jpg" alt="App Running on Device from Visual Studio" style="display: block; margin: 0 auto; length: 500px; width: 275px" />
+
+### Conclusion
+
+To summarize, it is possible for devs getting started to run their code on an iOS device without paying the yearly "Apple tax". However, it is not the most intuitive process and only buys you a small window of time while developing before the process needs to be repeated. Most application services will not be available with free provisioning as well including Apple Pay, iCloud and In-App Purchasing just to name a few. While disappointing, at least this gives potential iOS developers a chance to experiment before committing to an Apple project with their wallets.
