@@ -3,8 +3,7 @@ title: A Little About Myself
 image: shawn-and-doc.jpg
 ---
 
-My name is Shawn Vause. I am a full-stack software engineer living in Western Pennsylvania and currently working as an Advisory Software Engineer for
-[ZOLL Lifevest](https://lifevest.zoll.com). I've worked on everything from [Internet of Things (IoT)](https://en.wikipedia.org/wiki/Internet_of_things) powering 
+My name is Shawn Vause. I am a full-stack software engineer living in Western Pennsylvania. I've worked on everything from [Internet of Things (IoT)](https://en.wikipedia.org/wiki/Internet_of_things) powering 
 medical devices, serverless cloud architectures using [Azure](https://azure.microsoft.com) and [AWS](https://aws.amazon.com) and line of business applications 
 (primarily on the [ASP.NET](https://dotnet.microsoft.com/en-us/apps/aspnet) platform). I started my humble development career doing Enterprise Resource Planning (ERP) applications 
 in SAP using the proprietary ABAP programming language. This blog's content and opinions are my own and mainly for the purpose of helping others with technical 
