@@ -126,16 +126,16 @@ menu:
         icon: brand-github
 
     - identifier: linkedin
-      name: linkedin
+      name: Linkedin
       url: https://www.linkedin.com/in/shawn-vause/
       params:
         icon: brand-linkedin
 
-    - identifier: twitter
-      name: Twitter
+    - identifier: X
+      name: X
       url: https://twitter.com/SuperVause
       params:
-        icon: brand-twitter
+        icon: brand-x
 
     - identifier: facebook
       name: Facebook
