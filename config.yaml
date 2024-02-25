@@ -12,10 +12,12 @@ enableEmoji: true
 
 DefaultContentLanguage: en
 
-disqusShortname: shawn-vause
-
-# GA Tracking ID
-googleAnalytics: G-KNPRK3WBWJ
+services:
+  disqus:
+    shortname: "shawn-vause"
+  # GA Tracking ID
+  googleAnalytics:
+    id: G-KNPRK3WBWJ
 
 # Set hasCJKLanguage to true if DefaultContentLanguage is in [zh-cn ja ko]
 # This will make .Summary and .WordCount behave correctly for CJK languages.
