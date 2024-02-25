@@ -1,4 +1,475 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Shawn Vause - Shawn Vause's Blog</title><link>https://shawn.vause.us/posts/</link><description>Recent content in Posts on Shawn Vause - Shawn Vause's Blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Tue, 04 Oct 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://shawn.vause.us/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>.NET MAUI iOS Free Provisioning</title><link>https://shawn.vause.us/posts/maui-free-ios-provisioning/</link><pubDate>Tue, 04 Oct 2022 00:00:00 +0000</pubDate><guid>https://shawn.vause.us/posts/maui-free-ios-provisioning/</guid><description>&lt;p>Contrary to popular belief, it is possible to run an iOS application on your iPhone/iPad without paying the $99 USD fee per year to Apple for a developer program account. Through a process called free provisioning we can gain this freedom. It is a relatively simple task to accomplish and only involves some clicking around Xcode. There is no jailbreaking involved and it is supported by Apple. It does have some limitations that we will get into, but for those learning mobile development in Apple&amp;rsquo;s walled garden of a platform, it is a great way to get started without the added expense.&lt;/p>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Shawn Vause - Shawn Vause's Blog</title><link>https://shawn.vause.us/posts/</link><description>Recent content in Posts on Shawn Vause - Shawn Vause's Blog</description><generator>Hugo -- gohugo.io</generator><language>en</language><lastBuildDate>Sat, 24 Feb 2024 00:00:00 +0000</lastBuildDate><atom:link href="https://shawn.vause.us/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>OpenTelemetry for .NET Solutions with Grafana Tooling</title><link>https://shawn.vause.us/posts/opentelemetry-dotnet/</link><pubDate>Sat, 24 Feb 2024 00:00:00 +0000</pubDate><guid>https://shawn.vause.us/posts/opentelemetry-dotnet/</guid><description>&lt;p>Observability of solutions has become a critical component of modern distributed applications that deserves more forethought and consideration than often afforded to it. Typically, implementing visibility to application functionality is relegated to a last minute implementation detail for the sole purpose of checking a box to indicate the system has been delivered with core expectations. While I can understand developers are strapped with a never-ending backlog of features to deliver (often features with percieved higher value to stakeholders) there is frankly no feature of higher value for development teams and those supporting their applications than observability. When you are awakened in the middle of the night from your slumber to solve a system problem, you want to see where the issue is quickly and with the &amp;ldquo;right&amp;rdquo; level of detail to indicate what the solution is likely to be. Not only is this beneficial to restoring functionality for your customers, but let&amp;rsquo;s be honest, we need to get our asses back to bed quickly to handle the upcoming day. Enter &lt;a href="https://opentelemetry.io" title="OpenTelemetry">OpenTelemetry&lt;/a>, a tool to make our jobs easier and get the visibilty we need quickly, effectively and with a relatively easy implementation process.
+### end preview ###
+&lt;/p>
+&lt;p>OpenTelemetry (OTEL) is rapidly becoming the defacto solution for collecting observability data from our applications in the form of traces, metrics and logs (primer available &lt;a href="https://opentelemetry.io/docs/concepts/observability-primer/" title="Observability Primer">here&lt;/a>). A key benefit of using OTEL, is that it is vendor agnostic and thus enables us to self-host our observability stack or choose from multiple vendors that support OTEL telemetry. By standardizing how we instrument our applications we can move faster and get intelligent insights that correlate events in complex distributed systems built with a variety of different technologies and programming languages. Luckily, OTEL&amp;rsquo;s rise in popularity has lead to most modern languages providing an SDK to instrument across heterogenous distributed solutions. This post focuses on .NET based solutions, but be aware of the robust offerings available &lt;a href="https://opentelemetry.io/docs/languages" title="Language APIs &amp; SDKs">here&lt;/a>. OTEL helps with the collection process of telemetry and getting it out of our way quickly and easily, so we can focus on instrumenting our apps and providing value for ourselves and support teams from the start of a development project.&lt;/p>
+&lt;h3 id="setup">Setup&lt;/h3>
+&lt;p>For this post, we are going to instrument a simple Web API solution using ASP.NET Core. Create a new ASP.NET core Web API project utilizing .NET 8 and install the following nuget packages (at time of writing this post):&lt;/p>
+&lt;table>
+&lt;tr>
+&lt;th>Package Name&lt;/th>
+&lt;th>Version&lt;/th>
+&lt;th>Description&lt;/th>
+&lt;/tr>
+&lt;tr>
+&lt;td>OpenTelemetry&lt;/td>
+&lt;td>1.7.0&lt;/td>
+&lt;td>Core OTEL Functionality.&lt;/td>
+&lt;/tr>
+&lt;td>OpenTelemetry.Exporter.Console&lt;/td>
+&lt;td>1.7.0&lt;/td>
+&lt;td>Basic data exporter displaying telemetry in stdout.&lt;/td>
+&lt;/tr>
+&lt;td>OpenTelemetry.Exporter.OpenTelemetryProtocol&lt;/td>
+&lt;td>1.7.0&lt;/td>
+&lt;td>Data exporter using OTEL Protocol to transmit observability data (to OTEL Collector).&lt;/td>
+&lt;/tr>
+&lt;td>OpenTelemetry.Extensions.Hosting&lt;/td>
+&lt;td>1.7.0&lt;/td>
+&lt;td>Extensions to utilize OTEL in the Microsoft Hosting environment.&lt;/td>
+&lt;/tr>
+&lt;td>OpenTelemetry.Instrumentation.AspNetCore&lt;/td>
+&lt;td>1.7.1&lt;/td>
+&lt;td>Enables collection of ASP.NET Core observability data already built into it's libraries.&lt;/td>
+&lt;/tr>
+&lt;td>OpenTelemetry.Instrumentation.Http&lt;/td>
+&lt;td>1.7.1&lt;/td>
+&lt;td>Enables collection of HTTPClient observability data (again already built into the libraries).&lt;/td>
+&lt;/tr>
+&lt;td>OpenTelemetry.Instrumentation.Runtime&lt;/td>
+&lt;td>1.7.0&lt;/td>
+&lt;td>This is a cool one, get all the interesting observability data (allocations, garbage collections, etc.) from the dotnet runtime itself!&lt;/td>
+&lt;/tr>
+&lt;/table>
+&lt;h3 id="implementation">Implementation&lt;/h3>
+&lt;p>I am not sure if this is considered official best practice, but anytime I add a lot of &amp;ldquo;noise&amp;rdquo; to the dependency injection system, I always create a class(es) of extension methods to encapsulate core feature sets or group similar &amp;ldquo;services&amp;rdquo;. This helps keep the registration pipeline clean and readable. Create the following class as follows and we will step through it:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt"> 10
+&lt;/span>&lt;span class="lnt"> 11
+&lt;/span>&lt;span class="lnt"> 12
+&lt;/span>&lt;span class="lnt"> 13
+&lt;/span>&lt;span class="lnt"> 14
+&lt;/span>&lt;span class="lnt"> 15
+&lt;/span>&lt;span class="lnt"> 16
+&lt;/span>&lt;span class="lnt"> 17
+&lt;/span>&lt;span class="lnt"> 18
+&lt;/span>&lt;span class="lnt"> 19
+&lt;/span>&lt;span class="lnt"> 20
+&lt;/span>&lt;span class="lnt"> 21
+&lt;/span>&lt;span class="lnt"> 22
+&lt;/span>&lt;span class="lnt"> 23
+&lt;/span>&lt;span class="lnt"> 24
+&lt;/span>&lt;span class="lnt"> 25
+&lt;/span>&lt;span class="lnt"> 26
+&lt;/span>&lt;span class="lnt"> 27
+&lt;/span>&lt;span class="lnt"> 28
+&lt;/span>&lt;span class="lnt"> 29
+&lt;/span>&lt;span class="lnt"> 30
+&lt;/span>&lt;span class="lnt"> 31
+&lt;/span>&lt;span class="lnt"> 32
+&lt;/span>&lt;span class="lnt"> 33
+&lt;/span>&lt;span class="lnt"> 34
+&lt;/span>&lt;span class="lnt"> 35
+&lt;/span>&lt;span class="lnt"> 36
+&lt;/span>&lt;span class="lnt"> 37
+&lt;/span>&lt;span class="lnt"> 38
+&lt;/span>&lt;span class="lnt"> 39
+&lt;/span>&lt;span class="lnt"> 40
+&lt;/span>&lt;span class="lnt"> 41
+&lt;/span>&lt;span class="lnt"> 42
+&lt;/span>&lt;span class="lnt"> 43
+&lt;/span>&lt;span class="lnt"> 44
+&lt;/span>&lt;span class="lnt"> 45
+&lt;/span>&lt;span class="lnt"> 46
+&lt;/span>&lt;span class="lnt"> 47
+&lt;/span>&lt;span class="lnt"> 48
+&lt;/span>&lt;span class="lnt"> 49
+&lt;/span>&lt;span class="lnt"> 50
+&lt;/span>&lt;span class="lnt"> 51
+&lt;/span>&lt;span class="lnt"> 52
+&lt;/span>&lt;span class="lnt"> 53
+&lt;/span>&lt;span class="lnt"> 54
+&lt;/span>&lt;span class="lnt"> 55
+&lt;/span>&lt;span class="lnt"> 56
+&lt;/span>&lt;span class="lnt"> 57
+&lt;/span>&lt;span class="lnt"> 58
+&lt;/span>&lt;span class="lnt"> 59
+&lt;/span>&lt;span class="lnt"> 60
+&lt;/span>&lt;span class="lnt"> 61
+&lt;/span>&lt;span class="lnt"> 62
+&lt;/span>&lt;span class="lnt"> 63
+&lt;/span>&lt;span class="lnt"> 64
+&lt;/span>&lt;span class="lnt"> 65
+&lt;/span>&lt;span class="lnt"> 66
+&lt;/span>&lt;span class="lnt"> 67
+&lt;/span>&lt;span class="lnt"> 68
+&lt;/span>&lt;span class="lnt"> 69
+&lt;/span>&lt;span class="lnt"> 70
+&lt;/span>&lt;span class="lnt"> 71
+&lt;/span>&lt;span class="lnt"> 72
+&lt;/span>&lt;span class="lnt"> 73
+&lt;/span>&lt;span class="lnt"> 74
+&lt;/span>&lt;span class="lnt"> 75
+&lt;/span>&lt;span class="lnt"> 76
+&lt;/span>&lt;span class="lnt"> 77
+&lt;/span>&lt;span class="lnt"> 78
+&lt;/span>&lt;span class="lnt"> 79
+&lt;/span>&lt;span class="lnt"> 80
+&lt;/span>&lt;span class="lnt"> 81
+&lt;/span>&lt;span class="lnt"> 82
+&lt;/span>&lt;span class="lnt"> 83
+&lt;/span>&lt;span class="lnt"> 84
+&lt;/span>&lt;span class="lnt"> 85
+&lt;/span>&lt;span class="lnt"> 86
+&lt;/span>&lt;span class="lnt"> 87
+&lt;/span>&lt;span class="lnt"> 88
+&lt;/span>&lt;span class="lnt"> 89
+&lt;/span>&lt;span class="lnt"> 90
+&lt;/span>&lt;span class="lnt"> 91
+&lt;/span>&lt;span class="lnt"> 92
+&lt;/span>&lt;span class="lnt"> 93
+&lt;/span>&lt;span class="lnt"> 94
+&lt;/span>&lt;span class="lnt"> 95
+&lt;/span>&lt;span class="lnt"> 96
+&lt;/span>&lt;span class="lnt"> 97
+&lt;/span>&lt;span class="lnt"> 98
+&lt;/span>&lt;span class="lnt"> 99
+&lt;/span>&lt;span class="lnt">100
+&lt;/span>&lt;span class="lnt">101
+&lt;/span>&lt;span class="lnt">102
+&lt;/span>&lt;span class="lnt">103
+&lt;/span>&lt;span class="lnt">104
+&lt;/span>&lt;span class="lnt">105
+&lt;/span>&lt;span class="lnt">106
+&lt;/span>&lt;span class="lnt">107
+&lt;/span>&lt;span class="lnt">108
+&lt;/span>&lt;span class="lnt">109
+&lt;/span>&lt;span class="lnt">110
+&lt;/span>&lt;span class="lnt">111
+&lt;/span>&lt;span class="lnt">112
+&lt;/span>&lt;span class="lnt">113
+&lt;/span>&lt;span class="lnt">114
+&lt;/span>&lt;span class="lnt">115
+&lt;/span>&lt;span class="lnt">116
+&lt;/span>&lt;span class="lnt">117
+&lt;/span>&lt;span class="lnt">118
+&lt;/span>&lt;span class="lnt">119
+&lt;/span>&lt;span class="lnt">120
+&lt;/span>&lt;span class="lnt">121
+&lt;/span>&lt;span class="lnt">122
+&lt;/span>&lt;span class="lnt">123
+&lt;/span>&lt;span class="lnt">124
+&lt;/span>&lt;span class="lnt">125
+&lt;/span>&lt;span class="lnt">126
+&lt;/span>&lt;span class="lnt">127
+&lt;/span>&lt;span class="lnt">128
+&lt;/span>&lt;span class="lnt">129
+&lt;/span>&lt;span class="lnt">130
+&lt;/span>&lt;span class="lnt">131
+&lt;/span>&lt;span class="lnt">132
+&lt;/span>&lt;span class="lnt">133
+&lt;/span>&lt;span class="lnt">134
+&lt;/span>&lt;span class="lnt">135
+&lt;/span>&lt;span class="lnt">136
+&lt;/span>&lt;span class="lnt">137
+&lt;/span>&lt;span class="lnt">138
+&lt;/span>&lt;span class="lnt">139
+&lt;/span>&lt;span class="lnt">140
+&lt;/span>&lt;span class="lnt">141
+&lt;/span>&lt;span class="lnt">142
+&lt;/span>&lt;span class="lnt">143
+&lt;/span>&lt;span class="lnt">144
+&lt;/span>&lt;span class="lnt">145
+&lt;/span>&lt;span class="lnt">146
+&lt;/span>&lt;span class="lnt">147
+&lt;/span>&lt;span class="lnt">148
+&lt;/span>&lt;span class="lnt">149
+&lt;/span>&lt;span class="lnt">150
+&lt;/span>&lt;span class="lnt">151
+&lt;/span>&lt;span class="lnt">152
+&lt;/span>&lt;span class="lnt">153
+&lt;/span>&lt;span class="lnt">154
+&lt;/span>&lt;span class="lnt">155
+&lt;/span>&lt;span class="lnt">156
+&lt;/span>&lt;span class="lnt">157
+&lt;/span>&lt;span class="lnt">158
+&lt;/span>&lt;span class="lnt">159
+&lt;/span>&lt;span class="lnt">160
+&lt;/span>&lt;span class="lnt">161
+&lt;/span>&lt;span class="lnt">162
+&lt;/span>&lt;span class="lnt">163
+&lt;/span>&lt;span class="lnt">164
+&lt;/span>&lt;span class="lnt">165
+&lt;/span>&lt;span class="lnt">166
+&lt;/span>&lt;span class="lnt">167
+&lt;/span>&lt;span class="lnt">168
+&lt;/span>&lt;span class="lnt">169
+&lt;/span>&lt;span class="lnt">170
+&lt;/span>&lt;span class="lnt">171
+&lt;/span>&lt;span class="lnt">172
+&lt;/span>&lt;span class="lnt">173
+&lt;/span>&lt;span class="lnt">174
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-csharp" data-lang="csharp">&lt;span class="line">&lt;span class="cl">&lt;span class="k">using&lt;/span> &lt;span class="nn">OpenTelemetry.Instrumentation.AspNetCore&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">using&lt;/span> &lt;span class="nn">OpenTelemetry.Logs&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">using&lt;/span> &lt;span class="nn">OpenTelemetry.Metrics&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">using&lt;/span> &lt;span class="nn">OpenTelemetry.Resources&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">using&lt;/span> &lt;span class="nn">OpenTelemetry.Trace&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">using&lt;/span> &lt;span class="nn">System.Diagnostics.Metrics&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="k">namespace&lt;/span> &lt;span class="nn">WebApplication1&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="kd">public&lt;/span> &lt;span class="kd">static&lt;/span> &lt;span class="k">class&lt;/span> &lt;span class="nc">OpenTelemetryExtensions&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kd">private&lt;/span> &lt;span class="kd">static&lt;/span> &lt;span class="k">readonly&lt;/span> &lt;span class="n">Action&lt;/span>&lt;span class="p">&amp;lt;&lt;/span>&lt;span class="n">ResourceBuilder&lt;/span>&lt;span class="p">&amp;gt;&lt;/span> &lt;span class="n">_ConfigureResource&lt;/span> &lt;span class="p">=&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">r&lt;/span> &lt;span class="p">=&amp;gt;&lt;/span> &lt;span class="n">r&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">AddService&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">serviceName&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s">&amp;#34;web-application-1&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">serviceVersion&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="k">typeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Program&lt;/span>&lt;span class="p">).&lt;/span>&lt;span class="n">Assembly&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">GetName&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">.&lt;/span>&lt;span class="n">Version&lt;/span>&lt;span class="p">?.&lt;/span>&lt;span class="n">ToString&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">??&lt;/span> &lt;span class="s">&amp;#34;unknown&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">serviceInstanceId&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="n">Environment&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">MachineName&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kd">public&lt;/span> &lt;span class="kd">static&lt;/span> &lt;span class="n">IServiceCollection&lt;/span> &lt;span class="n">AddOpenTelemetryObservability&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">this&lt;/span> &lt;span class="n">IServiceCollection&lt;/span> &lt;span class="n">services&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">IConfiguration&lt;/span> &lt;span class="n">configuration&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">services&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">AddOpenTelemetry&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">.&lt;/span>&lt;span class="n">ConfigureResource&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">_ConfigureResource&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">.&lt;/span>&lt;span class="n">WithTracing&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">builder&lt;/span> &lt;span class="p">=&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">builder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">AddSource&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">.&lt;/span>&lt;span class="n">SetSampler&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">new&lt;/span> &lt;span class="n">AlwaysOnSampler&lt;/span>&lt;span class="p">())&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">.&lt;/span>&lt;span class="n">AddHttpClientInstrumentation&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">.&lt;/span>&lt;span class="n">AddAspNetCoreInstrumentation&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">services&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Configure&lt;/span>&lt;span class="p">&amp;lt;&lt;/span>&lt;span class="n">AspNetCoreTraceInstrumentationOptions&lt;/span>&lt;span class="p">&amp;gt;(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">configuration&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">GetSection&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;AspNetCoreInstrumentation&amp;#34;&lt;/span>&lt;span class="p">));&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">builder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">SetupTracingExporter&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">configuration&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">})&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">.&lt;/span>&lt;span class="n">WithMetrics&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">builder&lt;/span> &lt;span class="p">=&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">builder&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Used to record/export specific types &lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// of metrics (counters, gagues, etc.)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">//.AddMeter()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">.&lt;/span>&lt;span class="n">AddRuntimeInstrumentation&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">.&lt;/span>&lt;span class="n">AddHttpClientInstrumentation&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">.&lt;/span>&lt;span class="n">AddAspNetCoreInstrumentation&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">builder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">SetupMetricsView&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">configuration&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">builder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">SetupMetricsExporter&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">configuration&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">services&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kd">public&lt;/span> &lt;span class="kd">static&lt;/span> &lt;span class="k">void&lt;/span> &lt;span class="n">AddOpenTelemetryLogging&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="k">this&lt;/span> &lt;span class="n">ILoggingBuilder&lt;/span> &lt;span class="n">builder&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">IConfiguration&lt;/span> &lt;span class="n">configuration&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">logExporter&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">configuration&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">GetValue&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s">&amp;#34;UseLogExporter&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">defaultValue&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s">&amp;#34;console&amp;#34;&lt;/span>&lt;span class="p">)!.&lt;/span>&lt;span class="n">ToLowerInvariant&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">builder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">ClearProviders&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">builder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">AddOpenTelemetry&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">options&lt;/span> &lt;span class="p">=&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">resourceBuilder&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">ResourceBuilder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">CreateDefault&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">_ConfigureResource&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">resourceBuilder&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">options&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">SetResourceBuilder&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">resourceBuilder&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">options&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">SetupLogsExporter&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">logExporter&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">configuration&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kd">private&lt;/span> &lt;span class="kd">static&lt;/span> &lt;span class="k">void&lt;/span> &lt;span class="n">SetupTracingExporter&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">this&lt;/span> &lt;span class="n">TracerProviderBuilder&lt;/span> &lt;span class="n">builder&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">IConfiguration&lt;/span> &lt;span class="n">configuration&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">tracingExporter&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">configuration&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">GetValue&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s">&amp;#34;UseTracingExporter&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">defaultValue&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s">&amp;#34;console&amp;#34;&lt;/span>&lt;span class="p">)!.&lt;/span>&lt;span class="n">ToLowerInvariant&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">switch&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">tracingExporter&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">case&lt;/span> &lt;span class="s">&amp;#34;otlp&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">builder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">AddOtlpExporter&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">otlpOptions&lt;/span> &lt;span class="p">=&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">otlpOptions&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Endpoint&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="k">new&lt;/span> &lt;span class="n">Uri&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">configuration&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">GetValue&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s">&amp;#34;Otlp:Endpoint&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">defaultValue&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s">&amp;#34; http://localhost:4317&amp;#34;&lt;/span>&lt;span class="p">)!);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">break&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">default&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">builder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">AddConsoleExporter&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">break&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kd">private&lt;/span> &lt;span class="kd">static&lt;/span> &lt;span class="k">void&lt;/span> &lt;span class="n">SetupMetricsExporter&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">this&lt;/span> &lt;span class="n">MeterProviderBuilder&lt;/span> &lt;span class="n">builder&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">IConfiguration&lt;/span> &lt;span class="n">configuration&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">metricsExporter&lt;/span> &lt;span class="p">=&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">configuration&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">GetValue&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="s">&amp;#34;UseMetricsExporter&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">defaultValue&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s">&amp;#34;console&amp;#34;&lt;/span>&lt;span class="p">)!&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">.&lt;/span>&lt;span class="n">ToLowerInvariant&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">switch&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">metricsExporter&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">case&lt;/span> &lt;span class="s">&amp;#34;otlp&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">builder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">AddOtlpExporter&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">otlpOptions&lt;/span> &lt;span class="p">=&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">otlpOptions&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Endpoint&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="k">new&lt;/span> &lt;span class="n">Uri&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">configuration&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">GetValue&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s">&amp;#34;Otlp:Endpoint&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">defaultValue&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s">&amp;#34; http://localhost:4317&amp;#34;&lt;/span>&lt;span class="p">)!);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">break&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">default&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">builder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">AddConsoleExporter&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">break&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kd">private&lt;/span> &lt;span class="kd">static&lt;/span> &lt;span class="k">void&lt;/span> &lt;span class="n">SetupMetricsView&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">this&lt;/span> &lt;span class="n">MeterProviderBuilder&lt;/span> &lt;span class="n">builder&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">IConfiguration&lt;/span> &lt;span class="n">configuration&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">var&lt;/span> &lt;span class="n">histogramAggregation&lt;/span> &lt;span class="p">=&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">configuration&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">GetValue&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s">&amp;#34;HistogramAggregation&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span> &lt;span class="n">defaultValue&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s">&amp;#34;explicit&amp;#34;&lt;/span>&lt;span class="p">)!&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">.&lt;/span>&lt;span class="n">ToLowerInvariant&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">switch&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">histogramAggregation&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">case&lt;/span> &lt;span class="s">&amp;#34;exponential&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">builder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">AddView&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">instrument&lt;/span> &lt;span class="p">=&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">return&lt;/span> &lt;span class="n">instrument&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">GetType&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">.&lt;/span>&lt;span class="n">GetGenericTypeDefinition&lt;/span>&lt;span class="p">()&lt;/span> &lt;span class="p">==&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">typeof&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">Histogram&lt;/span>&lt;span class="p">&amp;lt;&amp;gt;)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">?&lt;/span> &lt;span class="k">new&lt;/span> &lt;span class="n">Base2ExponentialBucketHistogramConfiguration&lt;/span>&lt;span class="p">()&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">:&lt;/span> &lt;span class="kc">null&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">break&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">default&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="c1">// Explicit bounds histogram is default, nothing to do.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">break&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kd">private&lt;/span> &lt;span class="kd">static&lt;/span> &lt;span class="k">void&lt;/span> &lt;span class="n">SetupLogsExporter&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">this&lt;/span> &lt;span class="n">OpenTelemetryLoggerOptions&lt;/span> &lt;span class="n">options&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="kt">string&lt;/span> &lt;span class="n">logExporter&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">IConfiguration&lt;/span> &lt;span class="n">configuration&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">switch&lt;/span> &lt;span class="p">(&lt;/span>&lt;span class="n">logExporter&lt;/span>&lt;span class="p">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">case&lt;/span> &lt;span class="s">&amp;#34;otlp&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">options&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">AddOtlpExporter&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">otlpOptions&lt;/span> &lt;span class="p">=&amp;gt;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">otlpOptions&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Endpoint&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="k">new&lt;/span> &lt;span class="n">Uri&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">configuration&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">GetValue&lt;/span>&lt;span class="p">(&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="s">&amp;#34;Otlp:Endpoint&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">defaultValue&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s">&amp;#34; http://localhost:4317&amp;#34;&lt;/span>&lt;span class="p">)!);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">});&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">break&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">default&lt;/span>&lt;span class="p">:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="n">options&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">AddConsoleExporter&lt;/span>&lt;span class="p">();&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="k">break&lt;/span>&lt;span class="p">;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h4 id="configuration">Configuration&lt;/h4>
+&lt;p>The code is pretty readable in my opinion, but essentially we are using a configuration file with the following structure to drive the appropriate OTEL behaviors:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-json" data-lang="json">&lt;span class="line">&lt;span class="cl">&lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;Logging&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;LogLevel&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;Default&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;Information&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;Microsoft.AspNetCore&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;Warning&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;UseTracingExporter&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;otlp&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;UseMetricsExporter&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;otlp&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;UseLogExporter&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;otlp&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;HistogramAggregation&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;explicit&amp;#34;&lt;/span>&lt;span class="p">,&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;AspNetCoreInstrumentation&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;RecordException&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;true&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;Otlp&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="p">{&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;Endpoint&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;http://localhost:4317&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="p">},&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> &lt;span class="nt">&amp;#34;AllowedHosts&amp;#34;&lt;/span>&lt;span class="p">:&lt;/span> &lt;span class="s2">&amp;#34;*&amp;#34;&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>For each &amp;ldquo;&lt;em>Use&amp;lt;Data Type&amp;gt;Exporter&lt;/em>&amp;rdquo; property we take two string values currently &amp;ldquo;console&amp;rdquo; or &amp;ldquo;otlp&amp;rdquo;. This configures the system to use either a console exporter (great for testing) or the OpenTelemetry Protocol which is a vendor/tool agnostic protocol for transmitting traces, metrics and logs telemetry to another service. We will use something called the OTEL Collector as this service, but be aware that logging tools like DataDog and others support OTLP protocol natively in some cases. In addition, we provide an OTLP endpoint for sending data to the OTEL collector from our API. The last parameter controls how the histogram buckets metric data (explicit boundaries vs exponential scales).&lt;/p>
+&lt;h4 id="code-explanation">Code Explanation&lt;/h4>
+&lt;p>There are two public extension methods in the class defined above. One controls setting up the traces and metrics collection process for OTEL and the other (while similar) sets up the application logging provider. Using the settings from the &lt;code>appsettings.json&lt;/code> file we add appropriate exporters for getting observability data points out of our API. You will also notice that we add instrumentation for the various .NET core functionality that is made available to us (HTTPClient, Dotnet Runtime, AspNetCore) for trace and metrics. This is incredibly powerful by itself as a ton of telemetry for our solution is already built-in just waiting for us to export it somewhere we can make use of it!&lt;/p>
+&lt;p>Another important callout, is the use of the &lt;code>ConfigureResource&lt;/code> action method. OTEL will use the value configured as a service name tag value. This is really useful for grouping telemetry in an environment where maybe there are many distributed services working independently/interactively. It also allows us to tag our telemetry with a software version (think about handling blue/green deployments and rolling updates where multiple version of a service are live at the same time) and a machine name where the data originated from (load balanced environments).&lt;/p>
+&lt;h4 id="hook-up">Hook Up&lt;/h4>
+&lt;p>To utilize the extension methods above it is easy to wire them into the HTTP builder pipeline for your web application. In &lt;code>Program.cs&lt;/code>:&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-csharp" data-lang="csharp">&lt;span class="line">&lt;span class="cl">&lt;span class="kt">var&lt;/span> &lt;span class="n">builder&lt;/span> &lt;span class="p">=&lt;/span> &lt;span class="n">WebApplication&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">CreateBuilder&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">args&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">// Add this line below the above builder assignment to add OpenTelemetry for tracing and metrics.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">builder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Services&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">AddOpenTelemetryObservability&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">builder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Configuration&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">// Add this line to add OpenTelemetry for logging.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="n">builder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Logging&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">AddOpenTelemetryLogging&lt;/span>&lt;span class="p">(&lt;/span>&lt;span class="n">builder&lt;/span>&lt;span class="p">.&lt;/span>&lt;span class="n">Configuration&lt;/span>&lt;span class="p">);&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>I would recommend starting with the &lt;em>console&lt;/em> exporter and verifying that you start to see OTEL yaml for logs and metrics/trace data being written out to the console window.&lt;/p>
+&lt;p>In my next post, I will discuss taking this data from the console and pushing it to the OpenTelemetry Collector for display in Grafana! We will also touch on adding custom instrumentation to your code!&lt;/p></description></item><item><title>.NET MAUI iOS Free Provisioning</title><link>https://shawn.vause.us/posts/maui-free-ios-provisioning/</link><pubDate>Tue, 04 Oct 2022 00:00:00 +0000</pubDate><guid>https://shawn.vause.us/posts/maui-free-ios-provisioning/</guid><description>&lt;p>Contrary to popular belief, it is possible to run an iOS application on your iPhone/iPad without paying the $99 USD fee per year to Apple for a developer program account. Through a process called free provisioning we can gain this freedom. It is a relatively simple task to accomplish and only involves some clicking around Xcode. There is no jailbreaking involved and it is supported by Apple. It does have some limitations that we will get into, but for those learning mobile development in Apple&amp;rsquo;s walled garden of a platform, it is a great way to get started without the added expense.&lt;/p>
 &lt;p>We will demonstrate how free provisioning gets us started running code on our iOS device, through the lens of the relatively new &lt;a href="https://docs.microsoft.com/en-us/dotnet/maui/what-is-maui" title=".NET MAUI">.NET MAUI platform&lt;/a>. For those unaware, .NET MAUI is a solution that allows us to write a single UI using XAML or Blazor based controls that will run across iOS, Android, Mac and Windows. There are also capabilities to call into platform specific code as needs dictate, for instance to access sensors or platform specific APIs like those provided for in-app purchases. A simulator does exist for iOS on the Mac and Visual Studio provides some great tooling around remoting to your simulator from Windows environments. However, there is no substitute for running your software on physical hardware while developing. Frankly, it is a faster experience and a lot closer to how your customers will use your application.
 ### end preview ###
 &lt;/p>
