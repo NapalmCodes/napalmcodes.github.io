@@ -2,7 +2,9 @@
 ### end preview ###
 &lt;/p>
 &lt;p>OpenTelemetry (OTEL) is rapidly becoming the defacto solution for collecting observability data from our applications in the form of traces, metrics and logs (primer available &lt;a href="https://opentelemetry.io/docs/concepts/observability-primer/" title="Observability Primer">here&lt;/a>). A key benefit of using OTEL, is that it is vendor agnostic and thus enables us to self-host our observability stack or choose from multiple vendors that support OTEL telemetry. By standardizing how we instrument our applications we can move faster and get intelligent insights that correlate events in complex distributed systems built with a variety of different technologies and programming languages. Luckily, OTEL&amp;rsquo;s rise in popularity has lead to most modern languages providing an SDK to instrument across heterogenous distributed solutions. This post focuses on .NET based solutions, but be aware of the robust offerings available &lt;a href="https://opentelemetry.io/docs/languages" title="Language APIs &amp; SDKs">here&lt;/a>. OTEL helps with the collection process of telemetry and getting it out of our way quickly and easily, so we can focus on instrumenting our apps and providing value for ourselves and support teams from the start of a development project.&lt;/p>
-&lt;h3 id="setup">Setup&lt;/h3>
+&lt;h3 id="setup">
+&lt;a href="#setup">Setup&lt;/a>
+&lt;/h3>
 &lt;p>For this post, we are going to instrument a simple Web API solution using ASP.NET Core. Create a new ASP.NET core Web API project utilizing .NET 8 and install the following nuget packages (at time of writing this post):&lt;/p>
 &lt;table>
 &lt;tr>
@@ -40,7 +42,9 @@
 &lt;td>This is a cool one, get all the interesting observability data (allocations, garbage collections, etc.) from the dotnet runtime itself!&lt;/td>
 &lt;/tr>
 &lt;/table>
-&lt;h3 id="implementation">Implementation&lt;/h3>
+&lt;h3 id="implementation">
+&lt;a href="#implementation">Implementation&lt;/a>
+&lt;/h3>
 &lt;p>I am not sure if this is considered official best practice, but anytime I add a lot of &amp;ldquo;noise&amp;rdquo; to the dependency injection system, I always create a class(es) of extension methods to encapsulate core feature sets or group similar &amp;ldquo;services&amp;rdquo;. This helps keep the registration pipeline clean and readable. Create the following class as follows and we will step through it:&lt;/p>
 &lt;div class="highlight">&lt;div class="chroma">
 &lt;table class="lntable">&lt;tr>&lt;td class="lntd">
@@ -396,7 +400,9 @@
 &lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="p">}&lt;/span>
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
 &lt;/div>
-&lt;/div>&lt;h4 id="configuration">Configuration&lt;/h4>
+&lt;/div>&lt;h4 id="configuration">
+&lt;a href="#configuration">Configuration&lt;/a>
+&lt;/h4>
 &lt;p>The code is pretty readable in my opinion, but essentially we are using a configuration file with the following structure to drive the appropriate OTEL behaviors:&lt;/p>
 &lt;div class="highlight">&lt;div class="chroma">
 &lt;table class="lntable">&lt;tr>&lt;td class="lntd">
@@ -443,10 +449,14 @@
 &lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
 &lt;/div>
 &lt;/div>&lt;p>For each &amp;ldquo;&lt;em>Use&amp;lt;Data Type&amp;gt;Exporter&lt;/em>&amp;rdquo; property we take two string values currently &amp;ldquo;console&amp;rdquo; or &amp;ldquo;otlp&amp;rdquo;. This configures the system to use either a console exporter (great for testing) or the OpenTelemetry Protocol which is a vendor/tool agnostic protocol for transmitting traces, metrics and logs telemetry to another service. We will use something called the OTEL Collector as this service, but be aware that logging tools like DataDog and others support OTLP protocol natively in some cases. In addition, we provide an OTLP endpoint for sending data to the OTEL collector from our API. The last parameter controls how the histogram buckets metric data (explicit boundaries vs exponential scales).&lt;/p>
-&lt;h4 id="code-explanation">Code Explanation&lt;/h4>
+&lt;h4 id="code-explanation">
+&lt;a href="#code-explanation">Code Explanation&lt;/a>
+&lt;/h4>
 &lt;p>There are two public extension methods in the class defined above. One controls setting up the traces and metrics collection process for OTEL and the other (while similar) sets up the application logging provider. Using the settings from the &lt;code>appsettings.json&lt;/code> file we add appropriate exporters for getting observability data points out of our API. You will also notice that we add instrumentation for the various .NET core functionality that is made available to us (HTTPClient, Dotnet Runtime, AspNetCore) for trace and metrics. This is incredibly powerful by itself as a ton of telemetry for our solution is already built-in just waiting for us to export it somewhere we can make use of it!&lt;/p>
 &lt;p>Another important callout, is the use of the &lt;code>ConfigureResource&lt;/code> action method. OTEL will use the value configured as a service name tag value. This is really useful for grouping telemetry in an environment where maybe there are many distributed services working independently/interactively. It also allows us to tag our telemetry with a software version (think about handling blue/green deployments and rolling updates where multiple version of a service are live at the same time) and a machine name where the data originated from (load balanced environments).&lt;/p>
-&lt;h4 id="hook-up">Hook Up&lt;/h4>
+&lt;h4 id="hook-up">
+&lt;a href="#hook-up">Hook Up&lt;/a>
+&lt;/h4>
 &lt;p>To utilize the extension methods above it is easy to wire them into the HTTP builder pipeline for your web application. In &lt;code>Program.cs&lt;/code>:&lt;/p>
 &lt;div class="highlight">&lt;div class="chroma">
 &lt;table class="lntable">&lt;tr>&lt;td class="lntd">

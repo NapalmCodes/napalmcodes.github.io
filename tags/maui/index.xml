@@ -2,14 +2,18 @@
 &lt;p>We will demonstrate how free provisioning gets us started running code on our iOS device, through the lens of the relatively new &lt;a href="https://docs.microsoft.com/en-us/dotnet/maui/what-is-maui" title=".NET MAUI">.NET MAUI platform&lt;/a>. For those unaware, .NET MAUI is a solution that allows us to write a single UI using XAML or Blazor based controls that will run across iOS, Android, Mac and Windows. There are also capabilities to call into platform specific code as needs dictate, for instance to access sensors or platform specific APIs like those provided for in-app purchases. A simulator does exist for iOS on the Mac and Visual Studio provides some great tooling around remoting to your simulator from Windows environments. However, there is no substitute for running your software on physical hardware while developing. Frankly, it is a faster experience and a lot closer to how your customers will use your application.
 ### end preview ###
 &lt;/p>
-&lt;h3 id="requirements">Requirements&lt;/h3>
+&lt;h3 id="requirements">
+&lt;a href="#requirements">Requirements&lt;/a>
+&lt;/h3>
 &lt;ul>
 &lt;li>Visual Studio 2022 17.3.0 or above with the .NET MAUI workload installed&lt;/li>
 &lt;li>A Mac to compile and plug your iPhone/iPad device into&lt;/li>
 &lt;li>Xcode latest version installed on your Mac&lt;/li>
 &lt;li>An Apple ID not connected to Apple Developer Program&lt;/li>
 &lt;/ul>
-&lt;h3 id="xcode-steps">Xcode Steps&lt;/h3>
+&lt;h3 id="xcode-steps">
+&lt;a href="#xcode-steps">Xcode Steps&lt;/a>
+&lt;/h3>
 &lt;p>Begin by opening Xcode on your Mac and navigating via the menu bar to &lt;em>Xcode &amp;gt; Preferences&lt;/em>. Under the &lt;em>Accounts&lt;/em> tab, click the plus button to add your Apple ID account to Xcode using your user name and password.
 &lt;br/>&lt;br/>
 &lt;img src="xcode-add-acct.jpg" alt="Xcode Add Account Dialog" style="display: block; margin: 0 auto; length: 700px; width: 600px" />&lt;br/>
@@ -28,7 +32,9 @@ Once Xcode is done doing its thing, plug your iOS device into the Mac and unlock
 &lt;p>If you click on the information icon next to the words &lt;em>Xcode Managed Profile&lt;/em> you will see what was generated. You will also see the biggest limitation of this free provisioning process. The provisioning profile is only good for six days! Thankfully, you can just renew this value using an abbreviated version of the process discussed thus far. Please note though, signing identities will expire after a year.&lt;/p>
 &lt;p>At this point you can optionally deploy the sample application from Xcode to your device if you want to verify it is working as expected. Simply click the run button. It probably failed at this point saying it was an untrusted developer who built the app. Once again visit &lt;em>Settings&lt;/em> and go to &lt;em>General &amp;gt; VPN &amp;amp; Device Management&lt;/em>. There will be a developer app setting with your email there it says &amp;ldquo;Not Trusted&amp;rdquo; underneath. Click it and press the &lt;em>Trust &amp;ldquo;Apple Development: (your email)&lt;/em> button. Finally, confirm in the dialog that you trust yourself (unless you really don&amp;rsquo;t &amp;#x1f60f;). Run the app again and things should go more smoothly this time.&lt;br/>&lt;/p>
 &lt;img src="xcode-running-app.jpg" alt="App Running on Device from Xcode" style="display: block; margin: 0 auto; length: 500px; width: 275px" />
-&lt;h3 id="visual-studio-steps">Visual Studio Steps&lt;/h3>
+&lt;h3 id="visual-studio-steps">
+&lt;a href="#visual-studio-steps">Visual Studio Steps&lt;/a>
+&lt;/h3>
 &lt;p>Leave your iOS device connected to the Mac. Connect to your Mac from Visual Studio. Instructions can be found &lt;a class="link" href="https://learn.microsoft.com/en-us/dotnet/maui/ios/pair-to-mac" target="_blank" rel="noopener"
 >here&lt;/a> if needed. On your new MAUI project (I did the .NET MAUI Blazor App for fun) navigate to your project properties in the solution explorer. Scroll down to the iOS settings block on the left hand side and click &lt;em>Bundle Signing&lt;/em>. Here you need to ensure the scheme is set to &lt;em>Manual Provisioning&lt;/em> and signing identity is &lt;em>Developer (Automatic)&lt;/em>.&lt;br/>&lt;/p>
 &lt;img src="vs-bundle-signing.jpg" alt="Visual Studio Project Settings (Bundle Signing iOS)" style="display: block; margin: 0 auto;" />
@@ -36,5 +42,7 @@ Once Xcode is done doing its thing, plug your iOS device into the Mac and unlock
 &lt;img src="vs-info-plist.jpg" alt="Info.plist" style="display: block; margin: 0 auto;" />
 &lt;p>With a little luck, you should be able to choose your device from the &lt;em>iOS Remote Device&lt;/em> menu of the Visual Studio run tool. This will compile the iOS app and ship it to your device for launch.&lt;/p>
 &lt;img src="vs-running-app.jpg" alt="App Running on Device from Visual Studio" style="display: block; margin: 0 auto; length: 500px; width: 275px" />
-&lt;h3 id="conclusion">Conclusion&lt;/h3>
+&lt;h3 id="conclusion">
+&lt;a href="#conclusion">Conclusion&lt;/a>
+&lt;/h3>
 &lt;p>To summarize, it is possible for devs getting started to run their code on an iOS device without paying the yearly &amp;ldquo;Apple tax&amp;rdquo;. However, it is not the most intuitive process and only buys you a small window of time while developing before the process needs to be repeated. Most application services will not be available with free provisioning as well including Apple Pay, iCloud and In-App Purchasing just to name a few. While disappointing, at least this gives potential iOS developers a chance to experiment before committing to an Apple project with their wallets.&lt;/p></description></item></channel></rss>
