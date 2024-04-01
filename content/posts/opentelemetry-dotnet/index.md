@@ -290,3 +290,5 @@ builder.Logging.AddOpenTelemetryLogging(builder.Configuration);
 I would recommend starting with the *console* exporter and verifying that you start to see OTEL yaml for logs and metrics/trace data being written out to the console window.
 
 In my next post, I will discuss taking this data from the console and pushing it to the OpenTelemetry Collector for display in Grafana! We will also touch on adding custom instrumentation to your code!
+
+Part 2 can be found [here](/posts/opentelemetry-dotnet-2)!
