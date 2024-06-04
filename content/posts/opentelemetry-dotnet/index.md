@@ -12,7 +12,7 @@ tags = [
 ]
 +++
 
-Observability of solutions has become a critical component of modern distributed applications that deserves more forethought and consideration than often afforded to it. Typically, implementing visibility to application functionality is relegated to a last minute implementation detail for the sole purpose of checking a box to indicate the system has been delivered with core expectations. While I can understand developers are strapped with a never-ending backlog of features to deliver (often features with percieved higher value to stakeholders) there is frankly no feature of higher value for development teams and those supporting their applications than observability. When you are awakened in the middle of the night from your slumber to solve a system problem, you want to see where the issue is quickly and with the "right" level of detail to indicate what the solution is likely to be. Not only is this beneficial to restoring functionality for your customers, but let's be honest, we need to get our asses back to bed quickly to handle the upcoming day. Enter <a href="https://opentelemetry.io" title="OpenTelemetry">OpenTelemetry</a>, a tool to make our jobs easier and get the visibilty we need quickly, effectively and with a relatively easy implementation process.
+Observability of solutions has become a critical component of modern distributed applications that deserves more forethought and consideration than often afforded to it. Typically, implementing visibility to application functionality is relegated to a last minute implementation detail for the sole purpose of checking a box to indicate the system has been delivered with core expectations. While I can understand developers are strapped with a never-ending backlog of features to deliver (often features with perceived higher value to stakeholders) there is frankly no feature of higher value for development teams and those supporting their applications than observability. When you are awakened in the middle of the night from your slumber to solve a system problem, you want to see where the issue is quickly and with the "right" level of detail to indicate what the solution is likely to be. Not only is this beneficial to restoring functionality for your customers, but let's be honest, we need to get our asses back to bed quickly to handle the upcoming day. Enter <a href="https://opentelemetry.io" title="OpenTelemetry">OpenTelemetry</a>, a tool to make our jobs easier and get the visibility we need quickly, effectively and with a relatively easy implementation process.
 {{<preview_ph>}}
 
 OpenTelemetry (OTEL) is rapidly becoming the defacto solution for collecting observability data from our applications in the form of traces, metrics and logs (primer available <a href="https://opentelemetry.io/docs/concepts/observability-primer/" title="Observability Primer">here</a>). A key benefit of using OTEL, is that it is vendor agnostic and thus enables us to self-host our observability stack or choose from multiple vendors that support OTEL telemetry. By standardizing how we instrument our applications we can move faster and get intelligent insights that correlate events in complex distributed systems built with a variety of different technologies and programming languages. Luckily, OTEL's rise in popularity has lead to most modern languages providing an SDK to instrument across heterogenous distributed solutions. This post focuses on .NET based solutions, but be aware of the robust offerings available <a href="https://opentelemetry.io/docs/languages" title="Language APIs & SDKs">here</a>. OTEL helps with the collection process of telemetry and getting it out of our way quickly and easily, so we can focus on instrumenting our apps and providing value for ourselves and support teams from the start of a development project.
@@ -76,7 +76,7 @@ public static class OpenTelemetryExtensions
 {
 	private static readonly Action<ResourceBuilder> _ConfigureResource = 
 		r => r.AddService(
-			serviceName: "web-application-1",
+			serviceName: "web-app-1",
 			serviceVersion: typeof(Program).Assembly.GetName()
 					.Version?.ToString()
 						?? "unknown",
@@ -271,7 +271,7 @@ For each "*Use\<Data Type\>Exporter*" property we take two string values current
 
 There are two public extension methods in the class defined above. One controls setting up the traces and metrics collection process for OTEL and the other (while similar) sets up the application logging provider. Using the settings from the `appsettings.json` file we add appropriate exporters for getting observability data points out of our API. You will also notice that we add instrumentation for the various .NET core functionality that is made available to us (HTTPClient, Dotnet Runtime, AspNetCore) for trace and metrics. This is incredibly powerful by itself as a ton of telemetry for our solution is already built-in just waiting for us to export it somewhere we can make use of it!
 
-Another important callout, is the use of the `ConfigureResource` action method. OTEL will use the value configured as a service name tag value. This is really useful for grouping telemetry in an environment where maybe there are many distributed services working independently/interactively. It also allows us to tag our telemetry with a software version (think about handling blue/green deployments and rolling updates where multiple version of a service are live at the same time) and a machine name where the data originated from (load balanced environments).
+Another important call-out, is the use of the `ConfigureResource` action method. OTEL will use the value configured as a service name tag value. This is really useful for grouping telemetry in an environment where maybe there are many distributed services working independently/interactively. It also allows us to tag our telemetry with a software version (think about handling blue/green deployments and rolling updates where multiple version of a service are live at the same time) and a machine name where the data originated from (load balanced environments).
 
 #### Hook Up
 
@@ -289,4 +289,6 @@ builder.Logging.AddOpenTelemetryLogging(builder.Configuration);
 
 I would recommend starting with the *console* exporter and verifying that you start to see OTEL yaml for logs and metrics/trace data being written out to the console window.
 
-In my next post, I will discuss taking this data from the console and pushing it to the OpenTelemetry Collector for display in Grafana! We will also touch on adding custom instrumentation to your code!
+In my next post, I will discuss taking this data from the console and pushing it to the OpenTelemetry Collector for display in Grafana!
+
+Part 2 can be found [here](/posts/opentelemetry-dotnet-2)!
