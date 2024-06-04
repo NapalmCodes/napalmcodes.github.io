@@ -1,0 +1,561 @@
+<!doctype html><html lang=en dir=ltr><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><meta name=description content='An overview on setting up OpenTelemetry and OpenTelemetry Collector for .NET Core solutions, along with the necessary configuration to setup a cohesive observability solution utilizing OSS offerings Grafana, Grafana Tempo, Grafana Loki and Prometheus.'><meta name=author content='Shawn Vause'><meta name=copyright content='Shawn Vause'><title>OpenTelemetry for .NET Solutions with Grafana Tooling - Services Setup</title>
+<link rel=canonical href=https://shawn.vause.us/posts/opentelemetry-dotnet-2/><link rel=stylesheet href=/scss/style.min.9ec05cf82439e37bf155669502d21e1188bba55fa7a5ddacb5fdb5f750daed4b.css><meta property='og:title' content="OpenTelemetry for .NET Solutions with Grafana Tooling - Services Setup"><meta property='og:description' content="An overview on setting up OpenTelemetry and OpenTelemetry Collector for .NET Core solutions, along with the necessary configuration to setup a cohesive observability solution utilizing OSS offerings Grafana, Grafana Tempo, Grafana Loki and Prometheus."><meta property='og:url' content='https://shawn.vause.us/posts/opentelemetry-dotnet-2/'><meta property='og:site_name' content="Shawn Vause - Shawn Vause's Blog"><meta property='og:type' content='article'><meta property='article:section' content='Posts'><meta property='article:tag' content='dotnet'><meta property='article:tag' content='opentelemetry'><meta property='article:tag' content='observability'><meta property='article:published_time' content='2024-06-03T00:00:00+00:00'><meta property='article:modified_time' content='2024-06-03T00:00:00+00:00'><meta name=twitter:site content="@SuperVause"><meta name=twitter:creator content="@SuperVause"><meta name=twitter:title content="OpenTelemetry for .NET Solutions with Grafana Tooling - Services Setup"><meta name=twitter:description content="An overview on setting up OpenTelemetry and OpenTelemetry Collector for .NET Core solutions, along with the necessary configuration to setup a cohesive observability solution utilizing OSS offerings Grafana, Grafana Tempo, Grafana Loki and Prometheus."><script async src="https://www.googletagmanager.com/gtag/js?id=G-KNPRK3WBWJ"></script><script>var doNotTrack=!1;if(!doNotTrack){window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-KNPRK3WBWJ",{anonymize_ip:!1})}</script><script>document.onreadystatechange=function(){if(document.readyState=="complete"){var e=document.getElementById("recommendations-error");e&&e.remove()}}</script></head><body class=article-page><script>(function(){const e="StackColorScheme";localStorage.getItem(e)||localStorage.setItem(e,"auto")})()</script><script>(function(){const t="StackColorScheme",e=localStorage.getItem(t),n=window.matchMedia("(prefers-color-scheme: dark)").matches===!0;e=="dark"||e==="auto"&&n?document.documentElement.dataset.scheme="dark":document.documentElement.dataset.scheme="light"})()</script><div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky"><button class="hamburger hamburger--spin" type=button id=toggle-menu aria-label="Toggle Menu">
+<span class=hamburger-box><span class=hamburger-inner></span></span></button><header><figure class=site-avatar><a href=/><img src=/img/profile_hu2f761c4ecc1fe6bfe80b19bc1cf67e14_232950_300x0_resize_q75_box.jpg width=300 height=300 class=site-logo loading=lazy alt=Avatar></a></figure><div class=site-meta><h1 class=site-name><a href=/>Shawn Vause's Blog</a></h1><h2 class=site-description>AWS Certified Full Stack Software Engineer</h2></div></header><ol class=menu-social><li><a href=https://www.credly.com/users/shawn-vause target=_blank title=Credly rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-certificate" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2c3e50" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><circle cx="15" cy="15" r="3"/><path d="M13 17.5V22l2-1.5 2 1.5v-4.5"/><path d="M10 19H5a2 2 0 01-2-2V7c0-1.1.9-2 2-2h14a2 2 0 012 2v10a2 2 0 01-1 1.73"/><line x1="6" y1="9" x2="18" y2="9"/><line x1="6" y1="12" x2="9" y2="12"/><line x1="6" y1="15" x2="8" y2="15"/></svg></a></li><li><a href=https://www.facebook.com/vause target=_blank title=Facebook rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-facebook" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 10v4h3v7h4v-7h3l1-4h-4V8a1 1 0 011-1h3V3h-3a5 5 0 00-5 5v2H7"/></svg></a></li><li><a href=https://github.com/napalm684 target=_blank title=GitHub rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6.0 00-1.3-3.2 4.2 4.2.0 00-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3.0 00-6.2.0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2.0 00-.1 3.2A4.6 4.6.0 004 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg></a></li><li><a href=https://www.instagram.com/napalm684 target=_blank title=Instagram rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-instagram" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><rect x="4" y="4" width="16" height="16" rx="4"/><circle cx="12" cy="12" r="3"/><line x1="16.5" y1="7.5" x2="16.5" y2="7.501"/></svg></a></li><li><a href=https://www.linkedin.com/in/shawn-vause/ target=_blank title=Linkedin rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-linkedin" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><rect x="4" y="4" width="16" height="16" rx="2"/><line x1="8" y1="11" x2="8" y2="16"/><line x1="8" y1="8" x2="8" y2="8.01"/><line x1="12" y1="16" x2="12" y2="11"/><path d="M16 16v-3a2 2 0 00-4 0"/></svg></a></li><li><a href=https://twitter.com/SuperVause target=_blank title=X rel=me><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-x" width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4l11.733 16H20L8.267 4z"/><path d="M4 20l6.768-6.768m2.46-2.46L20 4"/></svg></a></li></ol><ol class=menu id=main-menu><li><a href=/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><polyline points="5 12 3 12 12 3 21 12 19 12"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/><path d="M9 21v-6a2 2 0 012-2h2a2 2 0 012 2v6"/></svg>
+<span>Home</span></a></li><li><a href=/page/about><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/></svg>
+<span>About</span></a></li><li><a href=/page/archives/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><rect x="3" y="4" width="18" height="4" rx="2"/><path d="M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+<span>Archives</span></a></li><li><a href=/page/search/><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="10" cy="10" r="7"/><line x1="21" y1="21" x2="15" y2="15"/></svg>
+<span>Search</span></a></li><div class=menu-bottom-section><li id=dark-mode-toggle><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="8" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="16" cy="12" r="2"/><rect x="2" y="6" width="20" height="12" rx="6"/></svg>
+<span>Dark Mode</span></li></div></ol></aside><main class="main full-width"><article class=main-article><header class=article-header><div class=article-details><div class=article-title-wrapper><h2 class=article-title><a href=/posts/opentelemetry-dotnet-2/>OpenTelemetry for .NET Solutions with Grafana Tooling - Services Setup</a></h2></div><footer class=article-time><div><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><path d="M11.795 21H5a2 2 0 01-2-2V7a2 2 0 012-2h12a2 2 0 012 2v4"/><circle cx="18" cy="18" r="4"/><path d="M15 3v4"/><path d="M7 3v4"/><path d="M3 11h16"/><path d="M18 16.496V18l1 1"/></svg>
+<time class=article-time--published>Jun 03, 2024</time></div><div><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentcolor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+<time class=article-time--reading>11 minute read</time></div></footer></div></header><section class=article-content><p>Welcome to part two of the series I started <a class=link href=/posts/opentelemetry-dotnet>here</a>! We will pick up with going over the necessary services to support the OpenTelemetry data being pumped in from our sample web application. We will utilize Docker compose as it provides a simple and easy way to orchestrate the necessary containers to send our observability data to. <a class=link href=https://github.com/open-telemetry/opentelemetry-collector target=_blank rel=noopener>OpenTelemetry Collector</a> will be used as a central hub for receiving the observablity data from our application. We can then distribute data across a variety of services including <a class=link href=https://grafana.com/oss/loki/ target=_blank rel=noopener>Grafana Loki</a> for logs, <a class=link href=https://grafana.com/oss/tempo/ target=_blank rel=noopener>Grafana Tempo</a> for traces and the <a class=link href=https://prometheus.io/ target=_blank rel=noopener>Prometheus</a> time series database for metrics. Finally, viewing the observability data in meaningful ways will require use of the popular <a class=link href=https://grafana.com/oss/grafana/ target=_blank rel=noopener>Grafana</a> visualization platform which provides us with data exploration tools for the aforementioned data types as well as graphical tooling to create graphs and dashboards from. Ultimately, the tools at our disposal enable us to build the elusive &ldquo;single pane of glass&rdquo; view for our application and how it is performing. Let&rsquo;s jump in!</p><h3 id=opentelemetry-collector><a href=#opentelemetry-collector>OpenTelemetry Collector</a></h3><p>The OpenTelemetry Collector is a service used to glue disparate observability solutions together. Think of it as the &ldquo;hub&rdquo; in a wheel and spoke architecture. Our web application will use the <a class=link href=https://opentelemetry.io/docs/specs/otel/protocol/ target=_blank rel=noopener>OpenTelemetry Protocol (OTLP)</a> supported by the OTEL collector to send all observability data (logs, traces, metrics) in a consistent way. This means our application only needs to take on the exporter dependency mentioned in the first part of this series for OTLP. All the data is thus sent to the collector &ldquo;speaking the same language&rdquo; vs having different protocols and specifications that would need maintained and supported. An added benefit of this approach is that if each application &ldquo;speaks OTLP&rdquo; we can spin up an auto scaling/load balanced environment that all our web applications and services (potentially written with a microservices architectural style) send observability data to, allowing for reuse of code, configuration and potentially infrastructure across our environment.</p><p>Configuring the OTEL collector allows us to use solutions potentially outside the OpenTelemetry ecosystem. For instance, metrics can be stored in a variety of data stores such as time series databases like Prometheus, traces can be stored in Grafana Tempo and logs in Grafana Loki. Rather than have our application directly talk to these tools, the OTEL collector intermediary gives us the opportunity to transform the data or perform some other pre-load activities. Typically this is setup using some YAML based configuration that the OTEL collector understands and utilizes to transform and forward observability data to the down stream solution (such as Prometheus).</p><h4 id=opentelemetry-collector-configuration><a href=#opentelemetry-collector-configuration>OpenTelemetry Collector Configuration</a></h4><p>I recommend you start by creating a folder in your solution for these configuration files called <code>observability</code> or something similar. Inside that folder create a file called <code>otelcol-config.yaml</code> Let&rsquo;s walk though the core sections of the yaml file typically present. For a more comprehensive look, examine the official documents found <a class=link href=https://opentelemetry.io/docs/collector/configuration/https://opentelemetry.io/docs/collector/configuration/ target=_blank rel=noopener>here</a>. The YAML below is broken up into four key sections: receivers, processors, exporters and services.</p><p>Receivers are observability data providers. Our applications wire up to the OTLP protocol endpoint(s) documented below and send all their OTEL data for ingestion.</p><p>Processors are an optional but recommended configuration element for the OTEL collector. These items give us a chance to modify or transform observability data before they are exported/delivered to downstream tools and databases. The <em>batch</em> processor noted in the configuration sample is responsible for compressing and grouping observability data. This makes more efficient use of the networking connections in our solution architecture.</p><p>Exporters simply send data to the desired destination(s) after processing has been performed. Note, we are setting the default logging level for all exporters to &ldquo;Debug&rdquo; in this section. This ensures you will get some data in this demo, but it may not be the desired level in production or when you are paying for log volume in a cloud/vendor solution.</p><p>Services are essentially an index of the receivers, processors and exporters configured within the other sections. Ultimately, the configuration here determines what services are enabled in the OTEL collector. The sub-section <code>pipelines</code> allows us to wire up configuration for logs, metrics and trace data in different ways. You will notice the configuration utilizes OTLP for all the observability data points as the receiver. The batch processors also ensure efficient use of network resources for metrics and logs.</p><p>Let&rsquo;s now walk through each tool we will utilize for each type of observability data.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nt>receivers</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>otlp</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>protocols</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>     </span><span class=nt>http</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nt>endpoint</span><span class=p>:</span><span class=w> </span><span class=m>0.0.0.0</span><span class=p>:</span><span class=m>4318</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>     </span><span class=nt>grpc</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>       </span><span class=nt>endpoint</span><span class=p>:</span><span class=w> </span><span class=m>0.0.0.0</span><span class=p>:</span><span class=m>4317</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>processors</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>batch</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>exporters</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>logging</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>loglevel</span><span class=p>:</span><span class=w> </span><span class=l>debug</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>service</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>pipelines</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>traces</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>receivers</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=l>otlp]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>exporters</span><span class=p>:</span><span class=w> </span><span class=p>[]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>metrics</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>receivers</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=l>otlp]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>processors</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=l>batch]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>exporters</span><span class=p>:</span><span class=w> </span><span class=p>[]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>logs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>receivers</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=l>otlp]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>processors</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=l>batch]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>exporters</span><span class=p>:</span><span class=w> </span><span class=p>[]</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><h4 id=grafana-loki><a href=#grafana-loki>Grafana Loki</a></h4><p>Let&rsquo;s talk about logs. Logs are preferably structured data points providing valuable insight from a given application. They should be used in conjunction with traces and metrics to provide a complete picture of how your application is performing and what it is doing at a given point in time. <a class=link href=https://grafana.com/oss/loki/ target=_blank rel=noopener>Grafana Loki</a> is an open source solution that provides storage, aggregation and query capabilities for you guessed it, log data.</p><p>Basic configuration of Loki is pretty easy to accomplish. First let&rsquo;s setup a resource processor for Loki by adding the following yaml to our original snippet.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nt>processors</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>batch</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>resource</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>attributes</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=nt>action</span><span class=p>:</span><span class=w> </span><span class=l>insert</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>key</span><span class=p>:</span><span class=w> </span><span class=l>loki.resource.labels</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>value</span><span class=p>:</span><span class=w> </span><span class=l>service.name</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>A resource processor is used to add, update or delete resource attributes on telemetry data. These key-value pairs provide contextual information about the source of the telemetry. In this case, we are adding a new attribute (inserting) with the key <code>loki.resource.labels</code>. Here we set the value to the service name producing the logs.</p><p>Next let&rsquo;s define an exporter in our yaml file.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nt>exporters</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>logging</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>loglevel</span><span class=p>:</span><span class=w> </span><span class=l>debug</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>loki</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>endpoint</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;http://loki:3100/loki/api/v1/push&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>tls</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>insecure</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>default_labels_enabled</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>exporter</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>job</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>The above yaml wires up an OTEL exporter for Loki by providing the endpoint to send log data to. Note, this is not a production safe configuration as we are not using <em>https</em> to keep things simple. In addition, some default log labels are applied for job and exporter information. Be aware that if all default labels are omitted and there are no other labels on the log it will be dropped.</p><p>Finally, we wire up the pipeline to send log data to the appropriate processors and receivers. Make the following yaml updates below.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=w>    </span><span class=nt>logs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>receivers</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=l>otlp]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>processors</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=l>batch, resource]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>exporters</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=l>loki]</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>Notice how we are processing log data with our resource processor and exporting to our Loki exporter. It should now make sense why there are called &ldquo;pipelines&rdquo; as we are essentially stitching together receivers, processors and exporters to provide a given type of observability data in our desired format to downstream services.</p><h4 id=grafana-tempo><a href=#grafana-tempo>Grafana Tempo</a></h4><p>Now that you understand the workflow involved with configuring a service, let&rsquo;s setup <a class=link href=https://grafana.com/oss/tempo/ target=_blank rel=noopener>Grafana Tempo</a> for trace data. Tempo is another open source Grafana Labs solution for analyzing and storing distributed trace data. The following yaml updates in <code>otelcol-config.yaml</code> are required:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nt>exporters</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=c># Other sections omitted for brevity</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=c># Add the following</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>otlp</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>endpoint</span><span class=p>:</span><span class=w> </span><span class=l>tempo:4317</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>tls</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>insecure</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>service</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>pipelines</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c># Other sections</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c># Add the following</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>traces</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>receivers</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=l>otlp]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>exporters</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=l>otlp]</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>We do not have a processor to run on our data so this configuration is a lot more simplistic. Essentially, we are declaring an exporter for Tempo with the desired endpoint and again disabling <em>https</em>. We then forward our data from the OTEL collector OTLP endpoint directly to Tempo&rsquo;s. Easy peasy lemon squeezy.</p><p>Tempo requires some additional configuration. In your observability folder add a <code>tempo.yaml</code> file and paste in the following details:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nt>stream_over_http_enabled</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>server</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>http_listen_port</span><span class=p>:</span><span class=w> </span><span class=m>3200</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>log_level</span><span class=p>:</span><span class=w> </span><span class=l>info</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>query_frontend</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>search</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>duration_slo</span><span class=p>:</span><span class=w> </span><span class=l>5s</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>throughput_bytes_slo</span><span class=p>:</span><span class=w> </span><span class=m>1.073741824e+09</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>trace_by_id</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>duration_slo</span><span class=p>:</span><span class=w> </span><span class=l>5s</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>distributor</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>receivers</span><span class=p>:</span><span class=w>                           </span><span class=c># this configuration will listen on all ports and protocols that tempo is capable of.</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>jaeger</span><span class=p>:</span><span class=w>                            </span><span class=c># the receives all come from the OpenTelemetry collector.  more configuration information can</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>protocols:                       # be found there</span><span class=p>:</span><span class=w> </span><span class=l>https://github.com/open-telemetry/opentelemetry-collector/tree/main/receiver</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>thrift_http</span><span class=p>:</span><span class=w>                   </span><span class=c>#</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>grpc</span><span class=p>:</span><span class=w>                          </span><span class=c># for a production deployment you should only enable the receivers you need!</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>thrift_binary</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>thrift_compact</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>zipkin</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>otlp</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>protocols</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>http</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>grpc</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>opencensus</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>metrics_generator</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>registry</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>external_labels</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>source</span><span class=p>:</span><span class=w> </span><span class=l>tempo</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>cluster</span><span class=p>:</span><span class=w> </span><span class=l>docker-compose</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>storage</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>/tmp/tempo/generator/wal</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>remote_write</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=nt>url</span><span class=p>:</span><span class=w> </span><span class=l>http://prometheus:9090/api/v1/write</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>send_exemplars</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>storage</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>trace</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>backend</span><span class=p>:</span><span class=w> </span><span class=l>local                    </span><span class=w> </span><span class=c># backend configuration to use</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>wal</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>/tmp/tempo/wal            </span><span class=w> </span><span class=c># where to store the the wal locally</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>local</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>/tmp/tempo/blocks</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>overrides</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>defaults</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>metrics_generator</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>processors</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=l>service-graphs, span-metrics]</span><span class=w> </span><span class=c># enables metrics generator</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>For an in-depth discussion what these settings accomplish, see the official documentation <a class=link href=https://grafana.com/docs/tempo/latest/configuration/#configure-tempo target=_blank rel=noopener>here</a>. Note, we are using metrics generator to send metrics generated from trace data to Prometheus which we will configure next.</p><h4 id=prometheus><a href=#prometheus>Prometheus</a></h4><p><a class=link href=https://prometheus.io/ target=_blank rel=noopener>Prometheus</a> is an open-source systems monitoring and alerting toolkit that provides a multi-dimensional time series database organized by metric name and key/value pairs. We will send our metric data there by adding the configuration below:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nt>exporters</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=c># Other sections omitted for brevity</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=c># Add the following</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>prometheus</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>endpoint</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;0.0.0.0:8889&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>service</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>pipelines</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c># Other sections</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c># Add the following</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>metrics</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>receivers</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=l>otlp]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>processors</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=l>batch]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>exporters</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=l>prometheus]</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>Again, we simply declare the endpoint for the Prometheus exporter and push the data to it using the batch processor.</p><p>Prometheus requires a little more configuration of its own as well. Create the following file in your <code>observability</code> folder and name it <code>prometheus.yaml</code>.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nt>global</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>scrape_interval</span><span class=p>:</span><span class=w>     </span><span class=l>15s</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>evaluation_interval</span><span class=p>:</span><span class=w> </span><span class=l>15s</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>scrape_configs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span>- <span class=nt>job_name</span><span class=p>:</span><span class=w> </span><span class=s1>&#39;prometheus&#39;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>static_configs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=nt>targets</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=w> </span><span class=s1>&#39;localhost:9090&#39;</span><span class=w> </span><span class=p>]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span>- <span class=nt>job_name</span><span class=p>:</span><span class=w> </span><span class=s1>&#39;tempo&#39;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>static_configs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=nt>targets</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=w> </span><span class=s1>&#39;tempo:3200&#39;</span><span class=w> </span><span class=p>]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span>- <span class=nt>job_name</span><span class=p>:</span><span class=w> </span><span class=s1>&#39;otelcol&#39;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>scrape_interval</span><span class=p>:</span><span class=w> </span><span class=l>1s</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>static_configs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=nt>targets</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=w> </span><span class=s1>&#39;otelcol:8889&#39;</span><span class=w> </span><span class=p>]</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>Essentially, we are collecting metrics from the OTEL collector, Tempo and even Prometheus itself with this configuration. See the <a class=link href=https://prometheus.io/docs/prometheus/latest/configuration/configuration/ target=_blank rel=noopener>official documentation</a> for further details.</p><h3 id=running-the-services><a href=#running-the-services>Running the services</a></h3><p>First we must create one more configuration file to create an index of datasources for the Grafana visualization platform to be aware of. Create <code>grafana-datasources.yaml</code> in your <code>observability</code> folder as follows:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>datasources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>Loki</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>loki</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>access</span><span class=p>:</span><span class=w> </span><span class=l>proxy</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>url</span><span class=p>:</span><span class=w> </span><span class=l>http://loki:3100</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>Tempo</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>tempo</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>access</span><span class=p>:</span><span class=w> </span><span class=l>proxy</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>orgId</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>url</span><span class=p>:</span><span class=w> </span><span class=l>http://tempo:3200</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>basicAuth</span><span class=p>:</span><span class=w> </span><span class=kc>false</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>isDefault</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>version</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>editable</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>uid</span><span class=p>:</span><span class=w> </span><span class=l>tempo</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>jsonData</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>httpMethod</span><span class=p>:</span><span class=w> </span><span class=l>GET</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>serviceMap</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>datasourceUid</span><span class=p>:</span><span class=w> </span><span class=l>prometheus</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>tracesToLogsV2</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>datasourceUid</span><span class=p>:</span><span class=w> </span><span class=l>Loki</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>tags</span><span class=p>:</span><span class=w> </span><span class=p>[]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>filterByTraceID</span><span class=p>:</span><span class=w> </span><span class=kc>false</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>filterBySpanID</span><span class=p>:</span><span class=w> </span><span class=kc>false</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>customQuery</span><span class=p>:</span><span class=w> </span><span class=kc>false</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>tracesToMetrics</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>datasourceUid</span><span class=p>:</span><span class=w> </span><span class=l>prometheus</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>tags</span><span class=p>:</span><span class=w> </span><span class=p>[]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>filterByTraceID</span><span class=p>:</span><span class=w> </span><span class=kc>false</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>filterBySpanID</span><span class=p>:</span><span class=w> </span><span class=kc>false</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>customQuery</span><span class=p>:</span><span class=w> </span><span class=kc>false</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>Prometheus</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>prometheus</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>uid</span><span class=p>:</span><span class=w> </span><span class=l>prometheus</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>access</span><span class=p>:</span><span class=w> </span><span class=l>proxy</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>orgId</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>url</span><span class=p>:</span><span class=w> </span><span class=l>http://prometheus:9090</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>basicAuth</span><span class=p>:</span><span class=w> </span><span class=kc>false</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>isDefault</span><span class=p>:</span><span class=w> </span><span class=kc>false</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>version</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>editable</span><span class=p>:</span><span class=w> </span><span class=kc>false</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>jsonData</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>httpMethod</span><span class=p>:</span><span class=w> </span><span class=l>GET</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>This file literally wires up datasources we configured previously and dependencies between them (such as stitching traces to metrics and logs). This index will allow Grafana to visualize and query the data.</p><p>Utilizing Docker desktop run <code>docker compose up</code> on your terminal in a directory with the following <code>docker-compose.yaml</code> file a level up from your <code>observability</code> folder. Note, the volumes configured for data persistance across restarts of the services and linking to the configuration files we created.</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span><span class=lnt>54
+</span><span class=lnt>55
+</span><span class=lnt>56
+</span><span class=lnt>57
+</span><span class=lnt>58
+</span><span class=lnt>59
+</span><span class=lnt>60
+</span><span class=lnt>61
+</span><span class=lnt>62
+</span><span class=lnt>63
+</span><span class=lnt>64
+</span><span class=lnt>65
+</span><span class=lnt>66
+</span><span class=lnt>67
+</span><span class=lnt>68
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nt>services</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>grafana</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>grafana/grafana:10.3.1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>environment</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=s2>&#34;GF_AUTH_DISABLE_LOGIN_FORM=true&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=s2>&#34;GF_AUTH_ANONYMOUS_ENABLED=true&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=s2>&#34;GF_AUTH_ANONYMOUS_ORG_ROLE=Admin&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=s2>&#34;GF_FEATURE_TOGGLES_ENABLE=traceToMetrics&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>volumes</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=l>./observability/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=s2>&#34;3000:3000&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>depends_on</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=l>tempo</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=l>loki</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>otelcol</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>otel/opentelemetry-collector-contrib:0.95.0</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>deploy</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>limits</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>memory</span><span class=p>:</span><span class=w> </span><span class=l>125M</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>restart</span><span class=p>:</span><span class=w> </span><span class=l>unless-stopped</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>command</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=w> </span><span class=s2>&#34;--config=/etc/otelcol-config.yaml&#34;</span><span class=w> </span><span class=p>]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>volumes</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=l>./observability/otelcol-config.yaml:/etc/otelcol-config.yaml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>     </span>- <span class=s2>&#34;4317:4317&#34;</span><span class=w>        </span><span class=c># OTLP gRPC receiver</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>     </span>- <span class=s2>&#34;4318:4318&#34;</span><span class=w>        </span><span class=c># OTLP HTTP receiver</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>loki</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>grafana/loki:2.9.4</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=s2>&#34;3100&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>command</span><span class=p>:</span><span class=w> </span>-<span class=l>config.file=/etc/loki/local-config.yaml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>volumes</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=l>./observability/loki-data:/loki</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>depends_on</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=l>otelcol</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>tempo</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>grafana/tempo:2.3.1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>command</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=w> </span><span class=s2>&#34;-config.file=/etc/tempo.yaml&#34;</span><span class=w> </span><span class=p>]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>volumes</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=l>./observability/tempo.yaml:/etc/tempo.yaml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=l>./observability/tempo-data:/tmp/tempo</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=s2>&#34;14268&#34;</span><span class=w>  </span><span class=c># jaeger ingest</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=s2>&#34;3200&#34;</span><span class=w>   </span><span class=c># tempo</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=s2>&#34;4317&#34;</span><span class=w>   </span><span class=c># otlp grpc</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=s2>&#34;4318&#34;</span><span class=w>   </span><span class=c># otlp http</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=s2>&#34;9411&#34;</span><span class=w>   </span><span class=c># zipkin</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>depends_on</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=l>prometheus</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=l>loki</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>prometheus</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>prom/prometheus:v2.50.0</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>command</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- --<span class=l>config.file=/etc/prometheus.yaml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- --<span class=l>web.enable-remote-write-receiver</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- --<span class=l>enable-feature=exemplar-storage</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- --<span class=l>enable-feature=promql-experimental-functions</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>volumes</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=l>./observability/prometheus.yaml:/etc/prometheus.yaml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=l>./observability/prometheus-data:/prometheus</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=s2>&#34;9090:9090&#34;</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>Congratulations! It has been a bit of a journey to get to this point. If all spins up as it should, then visit in your browser http://localhost:3000. If you click on the hamburger menu and <em>Explore</em> you should see the following datasources in the drop down:</p><p><img src=/posts/opentelemetry-dotnet-2/datasources.png width=497 height=345 srcset="/posts/opentelemetry-dotnet-2/datasources_hub6a5728903cc4f5dd60459d404e03305_37130_480x0_resize_box_3.png 480w, /posts/opentelemetry-dotnet-2/datasources_hub6a5728903cc4f5dd60459d404e03305_37130_1024x0_resize_box_3.png 1024w" loading=lazy alt="Grafana Datasources" class=gallery-image data-flex-grow=144 data-flex-basis=345px></p><p>Set your <code>appsettings.json</code> in your web application from the first post as follows for these properties to enable OTLP as our exporter:</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-json data-lang=json><span class=line><span class=cl><span class=p>{</span>
+</span></span><span class=line><span class=cl>  <span class=err>...</span>
+</span></span><span class=line><span class=cl>  <span class=nt>&#34;UseTracingExporter&#34;</span><span class=p>:</span> <span class=s2>&#34;otlp&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>  <span class=nt>&#34;UseMetricsExporter&#34;</span><span class=p>:</span> <span class=s2>&#34;otlp&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>  <span class=nt>&#34;UseLogExporter&#34;</span><span class=p>:</span> <span class=s2>&#34;otlp&#34;</span><span class=p>,</span>
+</span></span><span class=line><span class=cl>  <span class=err>...</span>
+</span></span><span class=line><span class=cl><span class=p>}</span>
+</span></span></code></pre></td></tr></table></div></div><p>Run your web application and make some API requests to generate some data. If you query Loki in the Grafana UI you should see log data like the following (note the job filter is set to "web-app-1"):</p><p><img src=/posts/opentelemetry-dotnet-2/loki-data.png width=1226 height=1010 srcset="/posts/opentelemetry-dotnet-2/loki-data_hu1399cf2dd4449066d6f07ff45d4437bd_117953_480x0_resize_box_3.png 480w, /posts/opentelemetry-dotnet-2/loki-data_hu1399cf2dd4449066d6f07ff45d4437bd_117953_1024x0_resize_box_3.png 1024w" loading=lazy alt="Loki Log Data" class=gallery-image data-flex-grow=121 data-flex-basis=291px></p><p>Tempo will have trace data along with a fancy flame graph when you select a trace ID:</p><p><img src=/posts/opentelemetry-dotnet-2/tempo-data.png width=1264 height=773 srcset="/posts/opentelemetry-dotnet-2/tempo-data_hu39454420b1703952c5e2c98c64c6616a_155655_480x0_resize_box_3.png 480w, /posts/opentelemetry-dotnet-2/tempo-data_hu39454420b1703952c5e2c98c64c6616a_155655_1024x0_resize_box_3.png 1024w" loading=lazy alt="Tempo Trace Data" class=gallery-image data-flex-grow=163 data-flex-basis=392px></p><p>Finally, Prometheus will have a host of metric values for your perusal:</p><p><img src=/posts/opentelemetry-dotnet-2/prometheus-data.png width=1261 height=1166 srcset="/posts/opentelemetry-dotnet-2/prometheus-data_hu769aaf7b2ca8a10a3507f6113dbedb28_205566_480x0_resize_box_3.png 480w, /posts/opentelemetry-dotnet-2/prometheus-data_hu769aaf7b2ca8a10a3507f6113dbedb28_205566_1024x0_resize_box_3.png 1024w" loading=lazy alt="Prometheus Metric Data" class=gallery-image data-flex-grow=108 data-flex-basis=259px></p><p>Feel free to experiment and build/install visualizations to your heart&rsquo;s content!</p></section><footer class=article-footer><section class=article-tags><a href=/tags/dotnet/>Dotnet</a>
+<a href=/tags/opentelemetry/>Opentelemetry</a>
+<a href=/tags/observability/>Observability</a></section></footer></article><aside class=related-content--wrapper><h2 class=section-title>Related content</h2><div class=related-content><div class="flex article-list--tile"><article><a href=/posts/opentelemetry-dotnet/><div class=article-details><h2 class=article-title>OpenTelemetry for .NET Solutions with Grafana Tooling</h2></div></a></article><article><a href=/posts/maui-free-ios-provisioning/><div class=article-details><h2 class=article-title>.NET MAUI iOS Free Provisioning</h2></div></a></article></div></div></aside><div class=disqus-container><div id=disqus_thread></div><script>window.disqus_config=function(){},function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById("disqus_thread").innerHTML="Disqus comments not available by default when the website is previewed locally.";return}var t=document,e=t.createElement("script");e.async=!0,e.src="//shawn-vause.disqus.com/embed.js",e.setAttribute("data-timestamp",+new Date),(t.head||t.body).appendChild(e)}()</script><noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript><a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a></div><style>.disqus-container{background-color:var(--card-background);border-radius:var(--card-border-radius);box-shadow:var(--shadow-l1);padding:var(--card-padding)}</style><script>window.addEventListener("onColorSchemeChange",e=>{typeof DISQUS=="object"&&DISQUS.reset({reload:!0})})</script><footer class=site-footer><section class=copyright>&copy;
+Copyright 2024 <a href=https://shawn.vause.us>Shawn Vause</a></section><section class=powerby>Built with <a href=https://gohugo.io/ target=_blank rel=noopener>Hugo</a><br>Theme <b><a href=https://github.com/CaiJimmy/hugo-theme-stack target=_blank rel=noopener data-version=3.25.0>Stack</a></b> designed by <a href=https://jimmycai.com target=_blank rel=noopener>Jimmy</a></section></footer><div class=pswp tabindex=-1 role=dialog aria-hidden=true><div class=pswp__bg></div><div class=pswp__scroll-wrap><div class=pswp__container><div class=pswp__item></div><div class=pswp__item></div><div class=pswp__item></div></div><div class="pswp__ui pswp__ui--hidden"><div class=pswp__top-bar><div class=pswp__counter></div><button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+<button class="pswp__button pswp__button--share" title=Share></button>
+<button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+<button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button><div class=pswp__preloader><div class=pswp__preloader__icn><div class=pswp__preloader__cut><div class=pswp__preloader__donut></div></div></div></div></div><div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap"><div class=pswp__share-tooltip></div></div><button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+</button>
+<button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)"></button><div class=pswp__caption><div class=pswp__caption__center></div></div></div></div></div><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo=" crossorigin=anonymous defer></script><script src=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU=" crossorigin=anonymous defer></script><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css crossorigin=anonymous><link rel=stylesheet href=https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css crossorigin=anonymous></main></div><script src=https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z+KMkF24hUW8WePSA9HM=" crossorigin=anonymous></script><script type=text/javascript src=/ts/main.js defer></script><script>(function(){const e=document.createElement("link");e.href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap",e.type="text/css",e.rel="stylesheet",document.head.appendChild(e)})()</script><script data-name=BMC-Widget data-cfasync=false src=https://cdnjs.buymeacoffee.com/1.0.0/widget.prod.min.js data-id=Shawn.Vause data-description="Support me on Buy me a coffee!" data-message data-color=#5F7FFF data-position=Right data-x_margin=18 data-y_margin=18></script></body></html>
