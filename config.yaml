@@ -1,7 +1,8 @@
 baseUrl: https://shawn.vause.us
 languageCode: en-us
 title: Shawn Vause - Shawn Vause's Blog
-paginate: 5
+pagination:
+  pagerSize: 5
 
 languages:
   en:
@@ -181,5 +182,5 @@ module:
   # uncomment line below for temporary local development of module
   # replacements: "github.com/CaiJimmy/hugo-theme-stack/v3 -> ../../hugo-theme-stack"
   imports:
-    - path: github.com/napalm684/hugo-theme-stack/v3
+    - path: github.com/NapalmCodes/hugo-theme-stack/v3
       disable: false

@@ -1,5 +1,5 @@
-module github.com/napalm684/napalm684.github.io
+module github.com/NapalmCodes/napalmcodes.github.io
 
-go 1.22.5
+go 1.23.3
 
-require github.com/napalm684/hugo-theme-stack/v3 v3.0.0-20240730005648-0fed866cf262 // indirect
+require github.com/NapalmCodes/hugo-theme-stack/v3 v3.0.0-20241113022545-a53f3e07e5f5 // indirect
